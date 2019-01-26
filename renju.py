@@ -226,6 +226,22 @@ class RenjuBoardTool(object):
             return False
         return (self.isOverline(coordinate) or self.isDoubleFour(coordinate) or self.isDoubleThree(coordinate))
 
+    def try_vcf(self):
+        vcf_path = []
+        #先保证算法是对的，一会儿再优化
+        #构建一个搜索树，然后强行爬树。 反正vcf树不会大的，强行爬完就是了
+        #类似mcts，但是不用select，反正都要完整爬。
+        #首先，根节点为当前局面。
+        #先手（进攻，试图vcf）方只能搜索 isFive 和 isFour 且不是isForbidden 的点来作为available
+        #如果对方有触发isFive 的点，且此点不available 则此走法被否定。
+        #如果所有走法被否定则直接回溯到parent.parent （上一手进攻）走法被否定。
+        #进攻方连五为胜
+        #防守方被抓禁的话会触发的。
+        #后手（防守方）只有一个策略，就是找对方isFive 点 来防。防守方不用去检查自己是否能连5，但是要返回自己落入禁手而失败的情况。 
+        #进攻方获胜则回溯拿到整个path进行返回。
+        #回溯到根节点下所有available被否定，则返回false
+        return vcf_path
+
     #已经落子之后， 调用此方法，从last_move获取最后落子点，来判断盘面胜负。
     def game_end(self):
         coordinate = self.last_move

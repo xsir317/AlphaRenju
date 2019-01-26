@@ -348,7 +348,7 @@ def UCT(rootstate, itermax, verbose = False):
 
         # Rollout - this can often be made orders of magnitude quicker using a state.GetRandomMove() function
         while state.GetMoves() != []: # while state is non-terminal
-            state.DoMove(random.choice(state.GetMoves()))
+            state.DoMove(random.choice(state.GetMoves())) 
 
         # Backpropagate
         while node != None: # backpropagate from the expanded node and work back to the root node
