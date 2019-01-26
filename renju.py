@@ -1,5 +1,6 @@
 import numpy as np
 
+#TODO 得把棋盘的b w 和 字符 . 换掉，最好是一行一个int32， 实在不行换成数字也好
 class RenjuBoardTool(object):
     EMPTY_STONE = '.' 
     BLACK_STONE = 'b'

@@ -11,5 +11,6 @@ try to solve the reju game with AlphaZero- like algorithm
  * AlphaGo 相关 https://zhuanlan.zhihu.com/p/20607684
  * 基本MCTS http://mcts.ai/project/index.html
  * Alpha beta  http://www.wukai.me/2018/03/04/minimax-alpha-beta-pruning-and-tic-tac-toe/
- * 
+ * Tensorflow 到底是怎么对照学习的。。。 还是得参考那个Alpha_Gomoku 的代码。  tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
+ * 这个我比较关注 https://blog.csdn.net/chengcheng1394/article/details/79526474 这里说到了一些细节
 
