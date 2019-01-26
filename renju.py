@@ -129,24 +129,26 @@ class RenjuBoardTool(object):
         self.setStone(RenjuBoardTool.EMPTY_STONE,coordinate)
         return result
 
-    def isFour(self,coordinate, shape = '|'):
+    def isFour(self,coordinate,color = RenjuBoardTool.BLACK_STONE, shape = '|'):
+        defense_point = ''
         if self._(coordinate) != RenjuBoardTool.EMPTY_STONE:
-            return False
+            return False,defense_point
         result = 0
-        self.setStone(RenjuBoardTool.BLACK_STONE,coordinate)
+        self.setStone(color,coordinate)
         count_black = 1
         for direction in RenjuBoardTool.directions[shape]:
             self._move_to(coordinate)
-            while RenjuBoardTool.BLACK_STONE == self.moveDirection(direction):
+            while color == self.moveDirection(direction):
                 count_black = count_black + 1
-            if self.isFive(self.current,RenjuBoardTool.BLACK_STONE,shape):
+            if self.isFive(self.current,color,shape):
                 result = result + 1
+                defense_point = self.coordinate2pos(self.current)
         #如果两边都能连5，则可能有一个特殊情况
         if count_black == 4 and result == 2:
             result = 1
         #恢复空格
         self.setStone(RenjuBoardTool.EMPTY_STONE,coordinate)
-        return result
+        return result,defense_point
 
     def isOpenFour(self,coordinate,shape = '|'):
         if self._(coordinate) != RenjuBoardTool.EMPTY_STONE:
@@ -198,7 +200,8 @@ class RenjuBoardTool(object):
     def isDoubleFour(self,coordinate):
         count = 0
         for s in RenjuBoardTool.directions.keys():
-            count += self.isFour(coordinate,s)
+            count_four,defense = self.isFour(coordinate,s)
+            count += count_four
             if count >= 2:
                 return True
         return False
@@ -229,6 +232,7 @@ class RenjuBoardTool(object):
     def try_vcf(self):
         vcf_path = []
         #先保证算法是对的，一会儿再优化
+        #测试数据 8889878698789a76979979a696a7aaa4a89577847346
         #构建一个搜索树，然后强行爬树。 反正vcf树不会大的，强行爬完就是了
         #类似mcts，但是不用select，反正都要完整爬。
         #首先，根节点为当前局面。
@@ -240,6 +244,7 @@ class RenjuBoardTool(object):
         #后手（防守方）只有一个策略，就是找对方isFive 点 来防。防守方不用去检查自己是否能连5，但是要返回自己落入禁手而失败的情况。 
         #进攻方获胜则回溯拿到整个path进行返回。
         #回溯到根节点下所有available被否定，则返回false
+
         return vcf_path
 
     #已经落子之后， 调用此方法，从last_move获取最后落子点，来判断盘面胜负。
