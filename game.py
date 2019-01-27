@@ -32,5 +32,5 @@ class Game(object):
                     print("WHITE_WIN")
                 else:
                     print("BLACK_WIN")
-                return winner, zip(states, mcts_probs)
+                return winner, [states, mcts_probs]
         

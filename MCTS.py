@@ -95,8 +95,9 @@ def UCT(rootstate, itermax, verbose = False):
             state.do_move(node.move)#爬
 
         # Expand 如果爬到了一个没有完全探测的子节点，则
+        # TODO 一个优化： 设置一个阈值， 子节点访问计数增加但是不着急展开，等计数超过N（设为40 参考知乎专栏介绍的优化思路）再做展开。
         if node.untriedMoves != []: # if we can expand (i.e. state/node is non-terminal)
-            m = random.choice(node.untriedMoves)  #随便选个没探测过的子节点，打开它然后爬过去。。。
+            m = random.choice(node.untriedMoves)  #随便选个没探测过的子节点，打开它然后爬过去。。。 TODO 这里使用policy试试； 
             #检查一下这个会导致胜负么。。。
             #color = (RenjuBoard.BLACK_STONE if state.get_current_player() else RenjuBoard.WHITE_STONE)
 
@@ -105,7 +106,7 @@ def UCT(rootstate, itermax, verbose = False):
             #在这里对有终结状态的untriedMoves直接处理掉。
 
         # Rollout - this can often be made orders of magnitude quicker using a state.GetRandomMove() function
-        while state.GetMoves() != []: # while state is non-terminal
+        while state.GetMoves() != []: # while state is non-terminal  TODO 这里使用policy试试； 
             state.do_move(random.choice(state.GetMoves())) 
 
         # Backpropagate
@@ -120,3 +121,4 @@ def UCT(rootstate, itermax, verbose = False):
         print (rootnode.ChildrenToString())
 
     return sorted(rootnode.childNodes, key = lambda c: c.visits)[-1].move # return the move that was most visited
+    #TODO 返回每个点的最终胜率
