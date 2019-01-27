@@ -1,6 +1,6 @@
 import numpy as np
 
-#TODO 得把棋盘的b w 和 字符 . 换掉，最好是一行一个int32， 实在不行换成数字也好
+#TODO 棋盘最好是一行一个int32， 实在不行换成数字也好
 class RenjuBoard(object):
     EMPTY_STONE = 0 
     BLACK_STONE = 1
@@ -8,6 +8,10 @@ class RenjuBoard(object):
     WHITE_FIVE = 1
     BLACK_FIVE = 2
     BLACK_FORBIDDEN = 4
+
+    WHITE_WIN = -1
+    BLACK_WIN = 1
+    DRAW = 0
 
     directions = {
         '|' : [[+1,0],[-1,0]],    #下，上
@@ -57,9 +61,21 @@ class RenjuBoard(object):
             i += 2
 
     def _debug_board(self):
-        print ("\n")
-        for row in self.board:
-            print (''.join(row))
+        return_str = "\n "
+        for x in range(15):
+            return_str += "{:x}".format(x+1).center(4)
+        return_str += "\r\n"
+        for i in range(15):
+            return_str += "{:x}".format(i+1)
+            for j in range(15):
+                if self._([i,j]) == RenjuBoard.BLACK_STONE:
+                    return_str += '●'.center(3)
+                elif self._([i,j]) == RenjuBoard.WHITE_STONE:
+                    return_str += '◯'.center(3)
+                else:
+                    return_str += '-'.center(4)
+            return_str += '\r\n\r\n'
+        print (return_str)
 
     def pos2coordinate(self,position):
         return [
@@ -248,16 +264,6 @@ class RenjuBoard(object):
         attacker = (RenjuBoard.BLACK_STONE if self.get_current_player() else RenjuBoard.WHITE_STONE)
         defender = RenjuBoard.get_oppo(attacker)
         #构建一个搜索树，然后强行爬树。 反正vcf树不会大的，强行爬完就是了
-        #类似mcts，但是不用select，反正都要完整爬。
-        #首先，根节点为当前局面。
-        #先手（进攻，试图vcf）方只能搜索 isFive 和 isFour 且不是isForbidden 的点来作为available
-        #如果对方有触发isFive 的点，且此点不available 则此走法被否定。
-        #如果所有走法被否定则直接回溯到parent.parent （上一手进攻）走法被否定。
-        #进攻方连五为胜
-        #防守方被抓禁的话会触发的。
-        #后手（防守方）只有一个策略，就是找对方isFive 点 来防。防守方不用去检查自己是否能连5，但是要返回自己落入禁手而失败的情况。 
-        #进攻方获胜则回溯拿到整个path进行返回。
-        #回溯到根节点下所有available被否定，则返回false
         def expand_vcf(board): #return win, expand_points
             collect = []
             oppo_win = [] #这里检查对方是否可能获胜，也就是是否有对方的冲四要挡
@@ -326,6 +332,17 @@ class RenjuBoard(object):
                 return_str += self.coordinate2pos(win)
         return return_str
 
+    def GetResult(self,player):
+        is_end, winner = self.game_end()
+        if is_end:
+            if winner == RenjuBoard.DRAW:
+                return RenjuBoard.DRAW
+            if (player == 1 and winner == RenjuBoard.BLACK_WIN) or (player == 0 and winner == RenjuBoard.WHITE_WIN):
+                return 1
+            else:
+                return 0
+        return 0
+        
     #已经落子之后， 调用此方法，从last_move获取最后落子点，来判断盘面胜负。
     def game_end(self):
         coordinate = self.last_move
@@ -342,27 +359,27 @@ class RenjuBoard(object):
         #coordinate = self.pos2coordinate(position)
         if color == RenjuBoard.WHITE_STONE:
             if self.isFive(coordinate,color):
-                return True,0
+                return True,RenjuBoard.WHITE_WIN
         else:
             if self.isFive(coordinate,color):
-                return True,1
+                return True,RenjuBoard.BLACK_WIN
             if self.isForbidden(coordinate):
-                return True,0
+                return True,RenjuBoard.WHITE_WIN
         
         counting = 0
         for row in self.board:
             counting += row.count(RenjuBoard.EMPTY_STONE)
             if counting > 1:
                 return False , -1
-        return True, -1
+        return True, RenjuBoard.DRAW
 
     def gomokuCheckWin(self,coordinate,color):
         #coordinate = self.pos2coordinate(position)
         if self.isFive(coordinate,color,'','gomoku'):
             if color == RenjuBoard.BLACK_STONE:
-                return RenjuBoard.BLACK_FIVE
+                return RenjuBoard.BLACK_WIN
             else:
-                return RenjuBoard.WHITE_FIVE
+                return RenjuBoard.BLACK_WIN
         return False
 
     def get_current_player(self):
@@ -430,18 +447,24 @@ class RenjuBoard(object):
 
     
     def current_state(self):
-        #square_state = np.zeros((6, self.width, self.height))
         square_state = np.zeros((4, self.width, self.height))
-        square_state[0] = self.dump_black()
-        square_state[1] = self.dump_white()
-        square_state[2] = self.dump_empty()
-        #square_state[3] = self.dump_forbiddens()
-        #square_state[4] = self.dump_win_points()
+        #square_state[0] = self.dump_black()
+        #square_state[1] = self.dump_white()
+        #square_state[2] = self.dump_empty()
+        for i in range(15):
+            for j in range(15):
+                ijstone = self._([i+1,j+1])
+                if ijstone == RenjuBoard.BLACK_STONE:
+                    square_state[0][i][j] = 1
+                elif ijstone == RenjuBoard.WHITE_STONE:
+                    square_state[1][i][j] = 1
+                else:
+                    square_state[2][i][j] = 1
         square_state[3][:, :] = self.get_current_player()
-        #return square_state[:, ::-1, :]
         return square_state
 
 #testboard = RenjuBoard('8889878698789a76979979a696a7aaa4a89577847346')
 #testboard = RenjuBoard('8889878698789a76979979a696a7aaa4a895')
-#testboard = RenjuBoard('88668776789698a6897584954849c8c95c37bcd7')
+testboard = RenjuBoard('88668776789698a6897584954849c8c95c37bcd7')
+testboard._debug_board()
 #print(testboard.VCF())
