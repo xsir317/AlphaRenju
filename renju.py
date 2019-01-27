@@ -1,10 +1,10 @@
 import numpy as np
 
 #TODO 得把棋盘的b w 和 字符 . 换掉，最好是一行一个int32， 实在不行换成数字也好
-class RenjuBoardTool(object):
-    EMPTY_STONE = '.' 
-    BLACK_STONE = 'b'
-    WHITE_STONE = 'w'
+class RenjuBoard(object):
+    EMPTY_STONE = 0 
+    BLACK_STONE = 1
+    WHITE_STONE = 2
     WHITE_FIVE = 1
     BLACK_FIVE = 2
     BLACK_FORBIDDEN = 4
@@ -15,6 +15,10 @@ class RenjuBoardTool(object):
         '\\' : [[+1,+1],[-1,-1]], #右下，左上
         '/' : [[+1,-1],[-1,+1]],  #左下，右上
     }
+
+    @staticmethod
+    def get_oppo(stone):
+        return 3 - stone
 
     def __init__(self,init = ''):
         self.reset(init)
@@ -29,21 +33,21 @@ class RenjuBoardTool(object):
                 self.availables.append(self.coordinate2pos([i,j]))
 
         self.board = [
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
-            ['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
         ]
         self.current = [1,1]
         i = 0
@@ -68,9 +72,9 @@ class RenjuBoardTool(object):
 
     def do_move(self,pos):
         coor = self.pos2coordinate(pos)
-        color = self.WHITE_STONE
+        color = RenjuBoard.WHITE_STONE
         if self.get_current_player():
-            color = self.BLACK_STONE
+            color = RenjuBoard.BLACK_STONE
         self.setStone(color,coor)
         self.last_move = pos
         self.availables.remove(pos)
@@ -103,9 +107,9 @@ class RenjuBoardTool(object):
 
     def count_stone(self,coordinate,shape):
         color = self._(coordinate)
-        if color == RenjuBoardTool.BLACK_STONE or color == RenjuBoardTool.WHITE_STONE:
+        if color == RenjuBoard.BLACK_STONE or color == RenjuBoard.WHITE_STONE:
             count = 1
-            for direction in RenjuBoardTool.directions[shape]:
+            for direction in RenjuBoard.directions[shape]:
                 self._move_to(coordinate)
                 while color == self.moveDirection(direction):
                     count = count + 1
@@ -113,7 +117,7 @@ class RenjuBoardTool(object):
         return 0
 
     def isFive(self,coordinate,color,shape = '',rule = 'renju'):
-        if self._(coordinate) != RenjuBoardTool.EMPTY_STONE:
+        if self._(coordinate) != RenjuBoard.EMPTY_STONE:
             return False
         self.setStone(color,coordinate)
         result = False
@@ -121,28 +125,28 @@ class RenjuBoardTool(object):
             count = self.count_stone(coordinate,shape)
             result = self.count_as_five(count,color,rule)
         else:
-            for s in RenjuBoardTool.directions.keys():
+            for s in RenjuBoard.directions.keys():
                 count = self.count_stone(coordinate,s)
                 result = self.count_as_five(count,color,rule)
                 if result:
                     break
-        self.setStone(RenjuBoardTool.EMPTY_STONE,coordinate)
+        self.setStone(RenjuBoard.EMPTY_STONE,coordinate)
         return result
 
     def isFour(self,coordinate,color, shape = ''):
         if shape == '':
-            for s in RenjuBoardTool.directions.keys():
+            for s in RenjuBoard.directions.keys():
                 result,defense_point = self.isFour(coordinate,color, s)
                 if result :
                     return result,defense_point
             return result,defense_point
         defense_point = None
-        if self._(coordinate) != RenjuBoardTool.EMPTY_STONE:
+        if self._(coordinate) != RenjuBoard.EMPTY_STONE:
             return False,defense_point
         result = 0
         self.setStone(color,coordinate)
         count_stone = 1
-        for direction in RenjuBoardTool.directions[shape]:
+        for direction in RenjuBoard.directions[shape]:
             self._move_to(coordinate)
             while color == self.moveDirection(direction):
                 count_stone = count_stone + 1
@@ -154,25 +158,25 @@ class RenjuBoardTool(object):
         if count_stone == 4 and result == 2:
             result = 1
         #恢复空格
-        self.setStone(RenjuBoardTool.EMPTY_STONE,coordinate)
+        self.setStone(RenjuBoard.EMPTY_STONE,coordinate)
         return result,defense_point
 
     def isOpenFour(self,coordinate,shape = '|'):
-        if self._(coordinate) != RenjuBoardTool.EMPTY_STONE:
+        if self._(coordinate) != RenjuBoard.EMPTY_STONE:
             return False
         count_active = 0
-        self.setStone(RenjuBoardTool.BLACK_STONE,coordinate)
+        self.setStone(RenjuBoard.BLACK_STONE,coordinate)
         count_black = 1
-        for direction in RenjuBoardTool.directions[shape]:
+        for direction in RenjuBoard.directions[shape]:
             self._move_to(coordinate)
-            while RenjuBoardTool.BLACK_STONE == self.moveDirection(direction):
+            while RenjuBoard.BLACK_STONE == self.moveDirection(direction):
                 count_black = count_black + 1
-            if self.isFive(self.current,RenjuBoardTool.BLACK_STONE,shape):
+            if self.isFive(self.current,RenjuBoard.BLACK_STONE,shape):
                 count_active = count_active + 1
             else:
                 break
         #恢复空格
-        self.setStone(RenjuBoardTool.EMPTY_STONE,coordinate)
+        self.setStone(RenjuBoard.EMPTY_STONE,coordinate)
         if count_black == 4 and count_active == 2:
             if self.isForbidden(coordinate):
                 return False
@@ -181,23 +185,23 @@ class RenjuBoardTool(object):
 
     def isOpenThree(self,coordinate,shape = '|'):
         result = False
-        self.setStone(RenjuBoardTool.BLACK_STONE,coordinate)
-        for direction in RenjuBoardTool.directions[shape]:
+        self.setStone(RenjuBoard.BLACK_STONE,coordinate)
+        for direction in RenjuBoard.directions[shape]:
             self._move_to(coordinate)
-            while RenjuBoardTool.BLACK_STONE == self.moveDirection(direction):
+            while RenjuBoard.BLACK_STONE == self.moveDirection(direction):
                 None
-            if self._() == RenjuBoardTool.EMPTY_STONE:
+            if self._() == RenjuBoard.EMPTY_STONE:
                 if self.isOpenFour(self.current,shape):
                     result = True
                     break#能活四的话另一边不用看了，不能活四再看另一头
             else:#如果落子的地方有一头不是空格，那看也不用看了。。。
                 break
-        self.setStone(RenjuBoardTool.EMPTY_STONE,coordinate)
+        self.setStone(RenjuBoard.EMPTY_STONE,coordinate)
         return result
 
     def isDoubleThree(self,coordinate):
         count = 0
-        for s in RenjuBoardTool.directions.keys():
+        for s in RenjuBoard.directions.keys():
             if self.isOpenThree(coordinate,s):
                 count = count + 1
                 if count >= 2:
@@ -206,39 +210,44 @@ class RenjuBoardTool(object):
 
     def isDoubleFour(self,coordinate):
         count = 0
-        for s in RenjuBoardTool.directions.keys():
-            count_four,defense = self.isFour(coordinate,RenjuBoardTool.BLACK_STONE,s)
+        for s in RenjuBoard.directions.keys():
+            count_four,defense = self.isFour(coordinate,RenjuBoard.BLACK_STONE,s)
             count += count_four
             if count >= 2:
                 return True
         return False
 
     def isOverline(self,coordinate):
-        self.setStone(RenjuBoardTool.BLACK_STONE,coordinate)
+        self.setStone(RenjuBoard.BLACK_STONE,coordinate)
         result = False
-        for s in RenjuBoardTool.directions.keys():
+        for s in RenjuBoard.directions.keys():
             if self.count_stone(coordinate,s) > 5:
                 result = True
                 break
 
-        self.setStone(RenjuBoardTool.EMPTY_STONE,coordinate)
+        self.setStone(RenjuBoard.EMPTY_STONE,coordinate)
         return result
 
     def count_as_five(self,number,color,rule = 'renju'):
-        if color == RenjuBoardTool.WHITE_STONE and rule == 'renju':
+        if color == RenjuBoard.WHITE_STONE and rule == 'renju':
             return number >= 5
         return number == 5
 
     def isForbidden(self,coordinate):
-        if self._(coordinate) != RenjuBoardTool.EMPTY_STONE:
+        if self._(coordinate) != RenjuBoard.EMPTY_STONE:
             return False
-        if self.isFive(coordinate,RenjuBoardTool.BLACK_STONE):
+        if self.isFive(coordinate,RenjuBoard.BLACK_STONE):
             return False
         return (self.isOverline(coordinate) or self.isDoubleFour(coordinate) or self.isDoubleThree(coordinate))
 
-    def try_vcf(self):
+    def VCF(self):
         vcf_path = []
         return_str = ''
+        
+        #谁在冲四，谁在防
+        attacker = (RenjuBoard.BLACK_STONE if self.get_current_player() else RenjuBoard.WHITE_STONE)
+        defender = RenjuBoard.get_oppo(attacker)
+
         #先保证算法是对的，一会儿再优化
         #测试数据 8889878698789a76979979a696a7aaa4a89577847346
         #构建一个搜索树，然后强行爬树。 反正vcf树不会大的，强行爬完就是了
@@ -252,21 +261,17 @@ class RenjuBoardTool(object):
         #后手（防守方）只有一个策略，就是找对方isFive 点 来防。防守方不用去检查自己是否能连5，但是要返回自己落入禁手而失败的情况。 
         #进攻方获胜则回溯拿到整个path进行返回。
         #回溯到根节点下所有available被否定，则返回false
-        #咱们就不clone了，直接来吧
         def expand_vcf(board): #return win, expand_points
-            board._debug_board()
             collect = []
             oppo_win = [] #这里检查对方是否可能获胜，也就是是否有对方的冲四要挡
-            curr_stone = (RenjuBoardTool.BLACK_STONE if board.get_current_player() else RenjuBoardTool.WHITE_STONE)
-            oppo_stone = (RenjuBoardTool.WHITE_STONE if self.get_current_player() else RenjuBoardTool.BLACK_STONE)
             for i in range(1,16):
                 for j in range(1,16):
-                    if board.isFive([i,j],curr_stone):
+                    if board.isFive([i,j],attacker):
                         return [i,j],[]
-                    elif board.isFive([i,j],oppo_stone):
+                    elif board.isFive([i,j],defender):
                         oppo_win.append([i,j])
-                    count_four,defense = board.isFour([i,j],curr_stone)
-                    if count_four > 0 and (curr_stone == RenjuBoardTool.WHITE_STONE or not board.isForbidden([i,j])):
+                    count_four,defense = board.isFour([i,j],attacker)
+                    if count_four > 0 and (attacker == RenjuBoard.WHITE_STONE or not board.isForbidden([i,j])):
                         collect.append([ [i,j] , defense])
             #走到这里的话，自己肯定是没连5， 检查对方的冲四点吧。
             if len(oppo_win) > 1:
@@ -277,10 +282,6 @@ class RenjuBoardTool(object):
                         return False,[ _c.copy() ]
                 return False,[] #几个冲四点都没匹配，并不能反冲四，则此局面的确没有可行方案
             return False,collect
-        
-        #谁在冲四，谁在防
-        attacker = (RenjuBoardTool.BLACK_STONE if self.get_current_player() else RenjuBoardTool.WHITE_STONE)
-        defender = (RenjuBoardTool.WHITE_STONE if self.get_current_player() else RenjuBoardTool.BLACK_STONE)
         expands = []
         
         win = False
@@ -297,18 +298,17 @@ class RenjuBoardTool(object):
                 not_expanded = expands.pop()
                 if(len(not_expanded) > 0):
                     break
-                else:
+                elif len(vcf_path) > 0:
                     to_remove = vcf_path.pop()#回溯
-                    self.setStone(RenjuBoardTool.EMPTY_STONE,to_remove[0])
-                    self.setStone(RenjuBoardTool.EMPTY_STONE,to_remove[1])
+                    self.setStone(RenjuBoard.EMPTY_STONE,to_remove[0])
+                    self.setStone(RenjuBoard.EMPTY_STONE,to_remove[1])
 
             if len(expands) == 0 and len(not_expanded) == 0:
                 break
             next_try = not_expanded.pop()
             vcf_path.append(next_try)
             expands.append(not_expanded)
-            print ("doatk:{:s} dodef:{:s}".format(self.coordinate2pos(next_try[0]),self.coordinate2pos(next_try[1])))
-            if defender == RenjuBoardTool.BLACK_STONE and self.isForbidden(next_try[1]):
+            if defender == RenjuBoard.BLACK_STONE and self.isForbidden(next_try[1]):
             #如果防守出现了禁手，那也是获胜了。 设置win 然后break
                 win = next_try[1]
                 win_by_forbidden = True
@@ -323,20 +323,19 @@ class RenjuBoardTool(object):
             for move_pair in vcf_path:
                 return_str += self.coordinate2pos(move_pair[0])
                 return_str += self.coordinate2pos(move_pair[1])
-                self.setStone(RenjuBoardTool.EMPTY_STONE,move_pair[0])
-                self.setStone(RenjuBoardTool.EMPTY_STONE,move_pair[1])
+                self.setStone(RenjuBoard.EMPTY_STONE,move_pair[0])
+                self.setStone(RenjuBoard.EMPTY_STONE,move_pair[1])
             if not win_by_forbidden:
                 return_str += self.coordinate2pos(win)
-
         return return_str
 
     #已经落子之后， 调用此方法，从last_move获取最后落子点，来判断盘面胜负。
     def game_end(self):
         coordinate = self.last_move
-        color = self.BLACK_STONE
+        color = RenjuBoard.BLACK_STONE
         if self.get_current_player():# 这时候棋子已经落子了。 所以是反过来的
-            color = self.WHITE_STONE
-        self.setStone(self.EMPTY_STONE,coordinate)
+            color = RenjuBoard.WHITE_STONE
+        self.setStone(RenjuBoard.EMPTY_STONE,coordinate)
         is_end, winner = self.checkWin(coordinate,color)
         self.setStone(color,coordinate)
         return is_end, winner
@@ -344,7 +343,7 @@ class RenjuBoardTool(object):
     #检测棋盘上指定点如果放下指定颜色的棋子，是否获胜。
     def checkWin(self,coordinate,color):
         #coordinate = self.pos2coordinate(position)
-        if color == RenjuBoardTool.WHITE_STONE:
+        if color == RenjuBoard.WHITE_STONE:
             if self.isFive(coordinate,color):
                 return True,0
         else:
@@ -355,7 +354,7 @@ class RenjuBoardTool(object):
         
         counting = 0
         for row in self.board:
-            counting += row.count(RenjuBoardTool.EMPTY_STONE)
+            counting += row.count(RenjuBoard.EMPTY_STONE)
             if counting > 1:
                 return False , -1
         return True, -1
@@ -363,10 +362,10 @@ class RenjuBoardTool(object):
     def gomokuCheckWin(self,coordinate,color):
         #coordinate = self.pos2coordinate(position)
         if self.isFive(coordinate,color,'','gomoku'):
-            if color == RenjuBoardTool.BLACK_STONE:
-                return RenjuBoardTool.BLACK_FIVE
+            if color == RenjuBoard.BLACK_STONE:
+                return RenjuBoard.BLACK_FIVE
             else:
-                return RenjuBoardTool.WHITE_FIVE
+                return RenjuBoard.WHITE_FIVE
         return False
 
     def get_current_player(self):
@@ -377,7 +376,7 @@ class RenjuBoardTool(object):
         for i in range(1,16):
             row = []
             for j in range(1,16):
-                if self._([i,j]) == RenjuBoardTool.BLACK_STONE:
+                if self._([i,j]) == RenjuBoard.BLACK_STONE:
                     row.append(1)
                 else:
                     row.append(0)
@@ -389,7 +388,7 @@ class RenjuBoardTool(object):
         for i in range(1,16):
             row = []
             for j in range(1,16):
-                if self._([i,j]) == RenjuBoardTool.WHITE_STONE:
+                if self._([i,j]) == RenjuBoard.WHITE_STONE:
                     row.append(1)
                 else:
                     row.append(0)
@@ -401,7 +400,7 @@ class RenjuBoardTool(object):
         for i in range(1,16):
             row = []
             for j in range(1,16):
-                if self._([i,j]) == RenjuBoardTool.EMPTY_STONE:
+                if self._([i,j]) == RenjuBoard.EMPTY_STONE:
                     row.append(1)
                 else:
                     row.append(0)
@@ -425,7 +424,7 @@ class RenjuBoardTool(object):
         for i in range(1,16):
             row = []
             for j in range(1,16):
-                if self.isFive([i,j],RenjuBoardTool.BLACK_STONE) or self.isFive([i,j],RenjuBoardTool.WHITE_STONE):
+                if self.isFive([i,j],RenjuBoard.BLACK_STONE) or self.isFive([i,j],RenjuBoard.WHITE_STONE):
                     row.append(1)
                 else:
                     row.append(0)
@@ -445,6 +444,7 @@ class RenjuBoardTool(object):
         #return square_state[:, ::-1, :]
         return square_state
 
-testboard = RenjuBoardTool('8889878698789a76979979a696a7aaa4a89577847346')
-#testboard = RenjuBoardTool('8889878698789a76979979a696a78aaaa9a87577685765')
-print(testboard.try_vcf())
+#testboard = RenjuBoard('8889878698789a76979979a696a7aaa4a89577847346')
+#testboard = RenjuBoard('8889878698789a76979979a696a7aaa4a895')
+testboard = RenjuBoard('88668776789698a6897584954849c8c95c37bcd7')
+print(testboard.VCF())
