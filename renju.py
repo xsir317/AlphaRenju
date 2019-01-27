@@ -247,9 +247,6 @@ class RenjuBoard(object):
         #谁在冲四，谁在防
         attacker = (RenjuBoard.BLACK_STONE if self.get_current_player() else RenjuBoard.WHITE_STONE)
         defender = RenjuBoard.get_oppo(attacker)
-
-        #先保证算法是对的，一会儿再优化
-        #测试数据 8889878698789a76979979a696a7aaa4a89577847346
         #构建一个搜索树，然后强行爬树。 反正vcf树不会大的，强行爬完就是了
         #类似mcts，但是不用select，反正都要完整爬。
         #首先，根节点为当前局面。
@@ -446,5 +443,5 @@ class RenjuBoard(object):
 
 #testboard = RenjuBoard('8889878698789a76979979a696a7aaa4a89577847346')
 #testboard = RenjuBoard('8889878698789a76979979a696a7aaa4a895')
-testboard = RenjuBoard('88668776789698a6897584954849c8c95c37bcd7')
-print(testboard.VCF())
+#testboard = RenjuBoard('88668776789698a6897584954849c8c95c37bcd7')
+#print(testboard.VCF())
