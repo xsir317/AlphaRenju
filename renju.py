@@ -73,7 +73,7 @@ class RenjuBoardTool(object):
             color = self.BLACK_STONE
         self.setStone(color,coor)
         self.last_move = pos
-        self.availables.remove(coor)
+        self.availables.remove(pos)
 
 
     def _move_to(self,to = [8,8]):
@@ -129,22 +129,22 @@ class RenjuBoardTool(object):
         self.setStone(RenjuBoardTool.EMPTY_STONE,coordinate)
         return result
 
-    def isFour(self,coordinate,color = RenjuBoardTool.BLACK_STONE, shape = '|'):
-        defense_point = ''
+    def isFour(self,coordinate,color, shape = '|'):
+        defense_point = None
         if self._(coordinate) != RenjuBoardTool.EMPTY_STONE:
             return False,defense_point
         result = 0
         self.setStone(color,coordinate)
-        count_black = 1
+        count_stone = 1
         for direction in RenjuBoardTool.directions[shape]:
             self._move_to(coordinate)
             while color == self.moveDirection(direction):
-                count_black = count_black + 1
+                count_stone = count_stone + 1
             if self.isFive(self.current,color,shape):
                 result = result + 1
-                defense_point = self.coordinate2pos(self.current)
+                defense_point = self.current.copy()
         #如果两边都能连5，则可能有一个特殊情况
-        if count_black == 4 and result == 2:
+        if count_stone == 4 and result == 2:
             result = 1
         #恢复空格
         self.setStone(RenjuBoardTool.EMPTY_STONE,coordinate)
@@ -200,7 +200,7 @@ class RenjuBoardTool(object):
     def isDoubleFour(self,coordinate):
         count = 0
         for s in RenjuBoardTool.directions.keys():
-            count_four,defense = self.isFour(coordinate,s)
+            count_four,defense = self.isFour(coordinate,RenjuBoardTool.BLACK_STONE,s)
             count += count_four
             if count >= 2:
                 return True
@@ -231,6 +231,7 @@ class RenjuBoardTool(object):
 
     def try_vcf(self):
         vcf_path = []
+        return_str = ''
         #先保证算法是对的，一会儿再优化
         #测试数据 8889878698789a76979979a696a7aaa4a89577847346
         #构建一个搜索树，然后强行爬树。 反正vcf树不会大的，强行爬完就是了
@@ -244,8 +245,69 @@ class RenjuBoardTool(object):
         #后手（防守方）只有一个策略，就是找对方isFive 点 来防。防守方不用去检查自己是否能连5，但是要返回自己落入禁手而失败的情况。 
         #进攻方获胜则回溯拿到整个path进行返回。
         #回溯到根节点下所有available被否定，则返回false
+        #咱们就不clone了，直接来吧
+        def expand_vcf(board): #return win, expand_points
+            collect = []
+            curr_stone = (RenjuBoardTool.BLACK_STONE if board.get_current_player() else RenjuBoardTool.WHITE_STONE)
+            for i in range(15):
+                for j in range(15):
+                    if board.isFive([i,j],curr_stone):
+                        return [i,j],[]
+                    count_four,defense = board.isFour([i,j],curr_stone)
+                    if count_four > 0 and (curr_stone == RenjuBoardTool.WHITE_STONE or not board.isForbidden([i,j])):
+                        collect.append([ [i,j] , defense])
+            return False,collect
+        
+        #谁在冲四，谁在防
+        attacker = (RenjuBoardTool.BLACK_STONE if self.get_current_player() else RenjuBoardTool.WHITE_STONE)
+        defender = (RenjuBoardTool.WHITE_STONE if self.get_current_player() else RenjuBoardTool.BLACK_STONE)
+        expands = []
+        
+        win = False
+        win_by_forbidden = False
+        while True:
+            win , availables = expand_vcf(self)
+            if win :
+                break
+            expands.append(availables)
 
-        return vcf_path
+            while True:
+                if len(expands) == 0:
+                    break
+                not_expanded = expands.pop()
+                if(len(not_expanded) > 0):
+                    break
+                else:
+                    to_remove = vcf_path.pop()#回溯
+                    self.setStone(RenjuBoardTool.EMPTY_STONE,to_remove[0])
+                    self.setStone(RenjuBoardTool.EMPTY_STONE,to_remove[1])
+
+            if len(expands) == 0 and len(not_expanded) == 0:
+                break
+            next_try = not_expanded.pop()
+            vcf_path.append(next_try)
+            expands.append(not_expanded)
+            #走冲四
+            self.setStone(attacker,next_try[0])
+            #走防守
+            if self.isForbidden(next_try[1]):
+                win = next_try[1]
+                win_by_forbidden = True
+                break
+            self.setStone(defender,next_try[1])
+            #如果防守出现了禁手，那也是获胜了。 设置win 然后break
+        #这里检测win，拼接返回，
+        if win:
+            #最后一手是win
+            for move_pair in vcf_path:
+                return_str += self.coordinate2pos(move_pair[0])
+                return_str += self.coordinate2pos(move_pair[1])
+                self.setStone(RenjuBoardTool.EMPTY_STONE,move_pair[0])
+                self.setStone(RenjuBoardTool.EMPTY_STONE,move_pair[1])
+            if not win_by_forbidden:
+                return_str += self.coordinate2pos(win)
+
+        return return_str
 
     #已经落子之后， 调用此方法，从last_move获取最后落子点，来判断盘面胜负。
     def game_end(self):
@@ -361,3 +423,6 @@ class RenjuBoardTool(object):
         square_state[3][:, :] = self.get_current_player()
         #return square_state[:, ::-1, :]
         return square_state
+
+testboard = RenjuBoardTool('8889878698789a76979979a696a7aaa4a89577847346')
+print(testboard.try_vcf())
