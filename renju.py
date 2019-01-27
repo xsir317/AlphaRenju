@@ -129,7 +129,13 @@ class RenjuBoardTool(object):
         self.setStone(RenjuBoardTool.EMPTY_STONE,coordinate)
         return result
 
-    def isFour(self,coordinate,color, shape = '|'):
+    def isFour(self,coordinate,color, shape = ''):
+        if shape == '':
+            for s in RenjuBoardTool.directions.keys():
+                result,defense_point = self.isFour(coordinate,color, s)
+                if result :
+                    return result,defense_point
+            return result,defense_point
         defense_point = None
         if self._(coordinate) != RenjuBoardTool.EMPTY_STONE:
             return False,defense_point
@@ -140,9 +146,10 @@ class RenjuBoardTool(object):
             self._move_to(coordinate)
             while color == self.moveDirection(direction):
                 count_stone = count_stone + 1
-            if self.isFive(self.current,color,shape):
+            current_Stone_copy = self.current.copy()
+            if self.isFive(self.current,color,shape):#隐藏bug，这里self.current 会乱跑的。因为isFive 会带着current跑
                 result = result + 1
-                defense_point = self.current.copy()
+                defense_point = current_Stone_copy.copy()
         #如果两边都能连5，则可能有一个特殊情况
         if count_stone == 4 and result == 2:
             result = 1
@@ -247,10 +254,11 @@ class RenjuBoardTool(object):
         #回溯到根节点下所有available被否定，则返回false
         #咱们就不clone了，直接来吧
         def expand_vcf(board): #return win, expand_points
+            board._debug_board()
             collect = []
             curr_stone = (RenjuBoardTool.BLACK_STONE if board.get_current_player() else RenjuBoardTool.WHITE_STONE)
-            for i in range(15):
-                for j in range(15):
+            for i in range(1,16):
+                for j in range(1,16):
                     if board.isFive([i,j],curr_stone):
                         return [i,j],[]
                     count_four,defense = board.isFour([i,j],curr_stone)
@@ -287,6 +295,7 @@ class RenjuBoardTool(object):
             next_try = not_expanded.pop()
             vcf_path.append(next_try)
             expands.append(not_expanded)
+            print ("doatk:{:s} dodef:{:s}".format(self.coordinate2pos(next_try[0]),self.coordinate2pos(next_try[1])))
             #走冲四
             self.setStone(attacker,next_try[0])
             #走防守
@@ -425,4 +434,5 @@ class RenjuBoardTool(object):
         return square_state
 
 testboard = RenjuBoardTool('8889878698789a76979979a696a7aaa4a89577847346')
+#testboard = RenjuBoardTool('8889878698789a76979979a696a78aaaa9a87577685765')
 print(testboard.try_vcf())
