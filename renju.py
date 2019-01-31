@@ -34,7 +34,7 @@ class RenjuBoard(object):
         self.availables = []
         for i in range(1,16):
             for j in range(1,16):
-                self.availables.append(self.coordinate2pos([i,j]))
+                self.availables.append(RenjuBoard.coordinate2pos([i,j]))
 
         self.board = [
             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
@@ -77,17 +77,19 @@ class RenjuBoard(object):
             return_str += '\r\n\r\n'
         print (return_str)
 
+    @staticmethod
     def pos2coordinate(self,position):
         return [
             int(position[0],16),
             int(position[1],16),
         ]
     
+    @staticmethod
     def coordinate2pos(self,coordinate):
         return "{:x}{:x}".format(coordinate[0],coordinate[1])
 
     def do_move(self,pos):
-        coor = self.pos2coordinate(pos)
+        coor = RenjuBoard.pos2coordinate(pos)
         color = RenjuBoard.WHITE_STONE
         if self.get_current_player():
             color = RenjuBoard.BLACK_STONE
@@ -324,12 +326,12 @@ class RenjuBoard(object):
         if win:
             #最后一手是win
             for move_pair in vcf_path:
-                return_str += self.coordinate2pos(move_pair[0])
-                return_str += self.coordinate2pos(move_pair[1])
+                return_str += RenjuBoard.coordinate2pos(move_pair[0])
+                return_str += RenjuBoard.coordinate2pos(move_pair[1])
                 self.setStone(RenjuBoard.EMPTY_STONE,move_pair[0])
                 self.setStone(RenjuBoard.EMPTY_STONE,move_pair[1])
             if not win_by_forbidden:
-                return_str += self.coordinate2pos(win)
+                return_str += RenjuBoard.coordinate2pos(win)
         return return_str
 
     def GetResult(self,player):

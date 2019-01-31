@@ -21,14 +21,40 @@ class Node:
     """ A node in the game tree. Note wins is always from the viewpoint of playerJustMoved.
         Crashes if state not specified.
     """
-    def __init__(self, move = None, parent = None, state = None):
+    def __init__(self, move = None, parent = None,state = None, availabels = [],is_terminal = False,result = 0):
         self.move = move # the move that got us to this node - "None" for the root node
         self.parentNode = parent # "None" for the root node
         self.childNodes = []
         self.wins = 0
         self.visits = 0
-        self.untriedMoves = state.GetMoves() # future child nodes 这里就要用神经网络去估计每个点的初始胜率 参考https://zhuanlan.zhihu.com/p/20607684 
-        self.player = 1 - state.get_current_player() # the only part of the state that the Node needs later
+        self.is_terminal = is_terminal #此分支是否终结（明确结论）
+        self.result = result # win 1  draw 0 lose -1
+        self.untriedMoves = availabels # future child nodes 这里就要用神经网络去估计每个点的初始胜率 参考https://zhuanlan.zhihu.com/p/20607684 
+        self.player = 1 - (len(availabels) % 2) # the only part of the state that the Node needs later
+        #when init, if it's not terminal,check every untriedMoves see if it's terminal
+        if(not is_terminal):
+            color = RenjuBoard.BLACK_STONE
+            if self.player:
+                color = RenjuBoard.WHITE_STONE
+            for next_move in self.untriedMoves:
+                _end,_result = state.checkWin(RenjuBoard.pos2coordinate(next_move),color)
+                if(_end):
+                    if (color == RenjuBoard.BLACK_STONE and _result == RenjuBoard.BLACK_WIN) or (color == RenjuBoard.WHITE_STONE and _result == RenjuBoard.WHITE_WIN):
+                        child_win = 1
+                    elif _result == RenjuBoard.DRAW:
+                        child_win = 0
+                    else:
+                        child_win = -1
+                    _child  = self.AddChild(next_move,self,is_terminal = True,result = child_win)
+                    #if one of the child wins, set terminal status
+                    if child_win == 1:
+                        self.is_terminal = True
+                        self.result = -1
+                        self.untriedMoves = []
+                        for childNode in self.childNodes:
+                            if childNode != _child:
+                                self.childNodes.remove(childNode)
+                        break
         
     def UCTSelectChild(self):
         s = sorted(self.childNodes, key = lambda c: c.wins/c.visits + sqrt(2*log(self.visits)/c.visits))[-1]
@@ -38,7 +64,7 @@ class Node:
         """ Remove m from untriedMoves and add a new child node for this move.
             Return the added child node
         """
-        n = Node(move = m, parent = self, state = s)
+        n = Node(move = m, parent = self,state = s, availabels = s.GetMoves())
         self.untriedMoves.remove(m)
         self.childNodes.append(n)
         return n
@@ -55,6 +81,7 @@ class Node:
         """
         self.visits += 1
         self.wins += result
+        #if not self.is_terminal,  check all the child and update self
 
     def __repr__(self):
         return "[M:" + str(self.move) + " W/V:" + str(self.wins) + "/" + str(self.visits) + " U:" + str(self.untriedMoves) + "]"
