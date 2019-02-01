@@ -82,6 +82,18 @@ class Node:
         self.visits += 1
         self.wins += result
         #if not self.is_terminal,  check all the child and update self
+        child_best = -1
+        child_terminated = True
+        for _child in self.childNodes:
+            if not _child.is_terminal:
+                child_terminated = False
+                continue
+            if _child.result > child_best:
+                child_best = _child.result
+            if child_best == 1:
+                break
+        child_terminated = child_terminated and (len(self.untriedMoves) > 0)
+        
 
     def __repr__(self):
         return "[M:" + str(self.move) + " W/V:" + str(self.wins) + "/" + str(self.visits) + " U:" + str(self.untriedMoves) + "]"
@@ -140,6 +152,7 @@ def UCT(rootstate, itermax, verbose = False):
         while node != None: # backpropagate from the expanded node and work back to the root node
             node.Update(state.GetResult(node.player)) # state is terminal. Update node with result from POV of node.playerJustMoved
             node = node.parentNode
+            #check the return of the Update, and if root is terminal , do the return, it's over.
 
     # Output some information about the tree - can be omitted
     if (verbose): 
