@@ -45,20 +45,14 @@ class Node:
         color = RenjuBoard.BLACK_STONE
         if player:
             color = RenjuBoard.WHITE_STONE
+        #https://en.wikipedia.org/wiki/Zobrist_hashing
         #TODO check VCF
-        for next_move in availabels:
-            _end,_result = state.checkWin(RenjuBoard.pos2coordinate(next_move),color)
-            if(_end):
-                if (color == RenjuBoard.BLACK_STONE and _result == RenjuBoard.BLACK_WIN) or (color == RenjuBoard.WHITE_STONE and _result == RenjuBoard.WHITE_WIN):
-                    child_win = 1
-                elif _result == RenjuBoard.DRAW:
-                    child_win = 0
-                else:
-                    child_win = -1
-                #if one of the child wins, set terminal status
-                if child_win == 1:
-                    return None
-                if child_win == -1:
+        if s.VCF():
+            return None
+        if color == RenjuBoard.BLACK_STONE :
+            #剔除禁手点
+            for next_move in availabels:
+                if state.isForbidden(RenjuBoard.pos2coordinate(next_move)):
                     availabels.remove(next_move)
         n = Node(move = m, parent = self, availabels = availabels)
         self.childNodes.append(n)

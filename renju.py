@@ -449,10 +449,7 @@ class RenjuBoard(object):
 
     
     def current_state(self):
-        square_state = np.zeros((4, self.width, self.height))
-        #square_state[0] = self.dump_black()
-        #square_state[1] = self.dump_white()
-        #square_state[2] = self.dump_empty()
+        square_state = np.zeros((3, self.width, self.height))
         for i in range(15):
             for j in range(15):
                 ijstone = self._([i+1,j+1])
@@ -460,9 +457,7 @@ class RenjuBoard(object):
                     square_state[0][i][j] = 1
                 elif ijstone == RenjuBoard.WHITE_STONE:
                     square_state[1][i][j] = 1
-                else:
-                    square_state[2][i][j] = 1
-        square_state[3][:, :] = self.get_current_player()
+        square_state[2][:, :] = self.get_current_player()
         return square_state
 
 #testboard = RenjuBoard('8889878698789a76979979a696a7aaa4a89577847346')
