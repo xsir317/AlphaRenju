@@ -11,14 +11,12 @@ import tensorflow as tf
 
 
 class PolicyValueNet():
-    def __init__(self, board_width, board_height, model_file=None):
-        self.board_width = board_width
-        self.board_height = board_height
+    def __init__(self, model_file=None):
 
         # Define the tensorflow neural network
         # 1. Input:
         self.input_states = tf.placeholder(
-                tf.float32, shape=[None, 4, board_height, board_width])
+                tf.float32, shape=[None, 4, 15, 15])
         self.input_state = tf.transpose(self.input_states, [0, 2, 3, 1])
         # 2. Common Networks Layers
         self.conv1 = tf.layers.conv2d(inputs=self.input_state,
@@ -40,11 +38,11 @@ class PolicyValueNet():
                                             activation=tf.nn.relu)
         # Flatten the tensor
         self.action_conv_flat = tf.reshape(
-                self.action_conv, [-1, 4 * board_height * board_width])
+                self.action_conv, [-1, 4 * 15 * 15])
         # 3-2 Full connected layer, the output is the log probability of moves
         # on each slot on the board
         self.action_fc = tf.layers.dense(inputs=self.action_conv_flat,
-                                         units=board_height * board_width,
+                                         units=15 * 15,
                                          activation=tf.nn.log_softmax)
         # 4 Evaluation Networks
         self.evaluation_conv = tf.layers.conv2d(inputs=self.conv3, filters=2,
@@ -53,7 +51,7 @@ class PolicyValueNet():
                                                 data_format="channels_last",
                                                 activation=tf.nn.relu)
         self.evaluation_conv_flat = tf.reshape(
-                self.evaluation_conv, [-1, 2 * board_height * board_width])
+                self.evaluation_conv, [-1, 2 * 15 * 15])
         self.evaluation_fc1 = tf.layers.dense(inputs=self.evaluation_conv_flat,
                                               units=64, activation=tf.nn.relu)
         # output the score of evaluation on current state
@@ -70,7 +68,7 @@ class PolicyValueNet():
                                                        self.evaluation_fc2)
         # 3-2. Policy Loss function
         self.mcts_probs = tf.placeholder(
-                tf.float32, shape=[None, board_height * board_width])
+                tf.float32, shape=[None, 15 * 15])
         self.policy_loss = tf.negative(tf.reduce_mean(
                 tf.reduce_sum(tf.multiply(self.mcts_probs, self.action_fc), 1)))
         # 3-3. L2 penalty (regularization)
@@ -122,7 +120,7 @@ class PolicyValueNet():
         """
         legal_positions = board.availables
         current_state = np.ascontiguousarray(board.current_state().reshape(
-                -1, 4, self.board_width, self.board_height))
+                -1, 4, 15, 15))
         act_probs, value = self.policy_value(current_state)
         act_probs = zip(legal_positions, act_probs[0][legal_positions])
         return act_probs, value
