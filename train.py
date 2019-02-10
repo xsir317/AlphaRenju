@@ -1,3 +1,6 @@
+from game import Game
+from policy_value_net import PolicyValueNet
+
 #new policy network
 #new MCTS
 #new Game

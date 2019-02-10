@@ -26,11 +26,15 @@ class Game(object):
             self.board._debug_board()
             end, winner = self.board.game_end()
             if end:
+                total_moves = len(states)
                 if winner == RenjuBoard.DRAW:
+                    winner_map = [0 for _i in range(total_moves)]
                     print("draw")
                 elif winner == RenjuBoard.WHITE_WIN:
+                    winner_map = [_i%2 for _i in range(total_moves)]
                     print("WHITE_WIN")
                 else:
+                    winner_map = [(_i+1)%2 for _i in range(total_moves)]
                     print("BLACK_WIN")
-                return winner, [states, mcts_probs]
+                return winner, [states, mcts_probs,winner_map]
         
