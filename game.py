@@ -22,7 +22,7 @@ class Game(object):
             states.append(self.board.current_state())
             mcts_probs.append(move_probs)
             # perform a move
-            self.board.do_move(move)
+            self.board.do_move_by_number(move)
             self.board._debug_board()
             end, winner = self.board.game_end()
             if end:

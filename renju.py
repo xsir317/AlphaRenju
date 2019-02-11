@@ -30,11 +30,8 @@ class RenjuBoard(object):
     def reset(self,init = ''):
         self.width = 15
         self.height = 15
-        self.last_move = '11'
-        self.availables = []
-        for i in range(1,16):
-            for j in range(1,16):
-                self.availables.append(RenjuBoard.coordinate2pos([i,j]))
+        self.last_move = 0
+        self.availables = [i for i in range(225)]
 
         self.board = [
             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
@@ -78,24 +75,39 @@ class RenjuBoard(object):
         print (return_str)
 
     @staticmethod
-    def pos2coordinate(self,position):
+    def pos2coordinate(position):
         return [
             int(position[0],16),
             int(position[1],16),
         ]
-    
+
     @staticmethod
-    def coordinate2pos(self,coordinate):
+    def pos2number(position):
+        return (int(position[0],16) - 1) * 15 + int(position[1],16) - 1
+
+    @staticmethod
+    def coordinate2pos(coordinate):
         return "{:x}{:x}".format(coordinate[0],coordinate[1])
 
+    @staticmethod
+    def num2coordinate(num):
+        return [
+            (num // 15) + 1 ,
+            (num % 15) + 1 ,
+        ]
+
     def do_move(self,pos):
-        coor = RenjuBoard.pos2coordinate(pos)
+        num = RenjuBoard.pos2number(pos)
+        self.do_move_by_number(num)
+
+    def do_move_by_number(self,number):
+        coor = RenjuBoard.num2coordinate(number)
         color = RenjuBoard.WHITE_STONE
         if self.get_current_player():
             color = RenjuBoard.BLACK_STONE
         self.setStone(color,coor)
-        self.last_move = pos
-        self.availables.remove(pos)
+        self.last_move = number
+        self.availables.remove(number)
 
 
     def _move_to(self,to = [8,8]):
@@ -347,7 +359,7 @@ class RenjuBoard(object):
         
     #已经落子之后， 调用此方法，从last_move获取最后落子点，来判断盘面胜负。
     def game_end(self):
-        coordinate = self.last_move
+        coordinate = RenjuBoard.num2coordinate(self.last_move)
         color = RenjuBoard.BLACK_STONE
         if self.get_current_player():# 这时候棋子已经落子了。 所以是反过来的
             color = RenjuBoard.WHITE_STONE
@@ -462,6 +474,6 @@ class RenjuBoard(object):
 
 #testboard = RenjuBoard('8889878698789a76979979a696a7aaa4a89577847346')
 #testboard = RenjuBoard('8889878698789a76979979a696a7aaa4a895')
-testboard = RenjuBoard('88668776789698a6897584954849c8c95c37bcd7')
-testboard._debug_board()
+#testboard = RenjuBoard('88668776789698a6897584954849c8c95c37bcd7')
+#testboard._debug_board()
 #print(testboard.VCF())

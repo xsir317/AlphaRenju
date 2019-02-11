@@ -16,7 +16,7 @@ class PolicyValueNet():
         # Define the tensorflow neural network
         # 1. Input:
         self.input_states = tf.placeholder(
-                tf.float32, shape=[None, 4, 15, 15])
+                tf.float32, shape=[None, 3, 15, 15])
         self.input_state = tf.transpose(self.input_states, [0, 2, 3, 1])
         # 2. Common Networks Layers
         self.conv1 = tf.layers.conv2d(inputs=self.input_state,
@@ -32,13 +32,13 @@ class PolicyValueNet():
                                       data_format="channels_last",
                                       activation=tf.nn.relu)
         # 3-1 Action Networks
-        self.action_conv = tf.layers.conv2d(inputs=self.conv3, filters=4,
+        self.action_conv = tf.layers.conv2d(inputs=self.conv3, filters=3,
                                             kernel_size=[1, 1], padding="same",
                                             data_format="channels_last",
                                             activation=tf.nn.relu)
         # Flatten the tensor
         self.action_conv_flat = tf.reshape(
-                self.action_conv, [-1, 4 * 15 * 15])
+                self.action_conv, [-1, 3 * 15 * 15])
         # 3-2 Full connected layer, the output is the log probability of moves
         # on each slot on the board
         self.action_fc = tf.layers.dense(inputs=self.action_conv_flat,
@@ -97,7 +97,7 @@ class PolicyValueNet():
 
         # For saving and restoring
         self.saver = tf.train.Saver()
-        if model_file is not None:
+        if model_file is not None and tf.train.checkpoint_exists(model_file):
             self.restore_model(model_file)
 
     def policy_value(self, state_batch):
@@ -120,7 +120,7 @@ class PolicyValueNet():
         """
         legal_positions = board.availables
         current_state = np.ascontiguousarray(board.current_state().reshape(
-                -1, 4, 15, 15))
+                -1, 3, 15, 15))
         act_probs, value = self.policy_value(current_state)
         act_probs = zip(legal_positions, act_probs[0][legal_positions])
         return act_probs, value

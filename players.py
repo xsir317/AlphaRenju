@@ -1,4 +1,5 @@
 import numpy as np
+from mcts_alphaZero import MCTS
 
 class Human(object):
     def __init__(self):
@@ -20,15 +21,14 @@ class MCTSPlayer(object):
 
     def __init__(self, policy_value_function,
                  c_puct=5, n_playout=2000, is_selfplay=0):
-        #self.mcts = MCTS(policy_value_function, c_puct, n_playout)
+        self.mcts = MCTS(policy_value_function, c_puct, n_playout)
         self._is_selfplay = is_selfplay
 
     def reset_player(self):
-        #self.mcts.update_with_move(-1)
-        None
+        self.mcts.update_with_move(-1)
 
     def get_action(self, board, temp=1e-3, return_prob=0):
-        sensible_moves = board.availables
+        #sensible_moves = board.availables
         # the pi vector returned by MCTS as in the alphaGo Zero paper
         move_probs = np.zeros(15*15)
         acts, probs = self.mcts.get_move_probs(board, temp)
@@ -50,6 +50,3 @@ class MCTSPlayer(object):
 #                location = board.move_to_location(move)
 #                print("AI move: %d,%d\n" % (location[0], location[1]))
         return move, move_probs
-
-    def __str__(self):
-        return "MCTS {}".format(self.player)

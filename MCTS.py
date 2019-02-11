@@ -52,7 +52,7 @@ class Node:
         if color == RenjuBoard.BLACK_STONE :
             #剔除禁手点
             for next_move in availabels:
-                if state.isForbidden(RenjuBoard.pos2coordinate(next_move)):
+                if s.isForbidden(RenjuBoard.pos2coordinate(next_move)):
                     availabels.remove(next_move)
         n = Node(move = m, parent = self, availabels = availabels)
         self.childNodes.append(n)
