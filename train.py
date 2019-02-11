@@ -10,7 +10,7 @@ init_model = 'renju'
 policy_value_net = PolicyValueNet(model_file=init_model)
 
 #new MCTS
-player = MCTSPlayer(policy_value_net.policy_value_fn)
+player = MCTSPlayer(policy_value_net.policy_value_fn,5,2000,1)
 game = Game(player,player)
 
 

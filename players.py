@@ -27,7 +27,7 @@ class MCTSPlayer(object):
     def reset_player(self):
         self.mcts.update_with_move(-1)
 
-    def get_action(self, board, temp=1e-3, return_prob=0):
+    def get_action(self, board, temp=1e-3):
         #sensible_moves = board.availables
         # the pi vector returned by MCTS as in the alphaGo Zero paper
         move_probs = np.zeros(15*15)
@@ -44,7 +44,7 @@ class MCTSPlayer(object):
             # with the default temp=1e-3, it is almost equivalent
             # to choosing the move with the highest prob
             move = np.random.choice(acts, p=probs)
-            #TODO 按照prob排序取最好的，不要random
+            #TODO 按照prob排序取最好的，不要random？
             # reset the root node
             self.mcts.update_with_move(-1)
 #                location = board.move_to_location(move)
