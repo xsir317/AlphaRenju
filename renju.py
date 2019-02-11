@@ -344,7 +344,10 @@ class RenjuBoard(object):
                 self.setStone(RenjuBoard.EMPTY_STONE,move_pair[1])
             if not win_by_forbidden:
                 return_str += RenjuBoard.coordinate2pos(win)
-        return RenjuBoard.pos2number(return_str[0:2]), return_str
+        win_move = None
+        if return_str:
+            win_move = RenjuBoard.pos2number(return_str[0:2])
+        return win_move , return_str
 
     def GetResult(self,player):
         is_end, winner = self.game_end()

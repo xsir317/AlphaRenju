@@ -8,6 +8,7 @@ network to guide the tree search and evaluate the leaf nodes
 
 import numpy as np
 import copy
+from renju import RenjuBoard
 
 
 def softmax(x):
@@ -30,6 +31,8 @@ class TreeNode(object):
         self._Q = 0
         self._u = 0
         self._P = prior_p
+        self._lose = False
+        self._win = False
 
     def expand(self, action_priors):
         """Expand tree by creating new children.
@@ -48,7 +51,7 @@ class TreeNode(object):
         return max(self._children.items(),
                    key=lambda act_node: act_node[1].get_value(c_puct))
 
-    def update(self, leaf_value):
+    def update(self, leaf_value,child_result = None):
         """Update node values from leaf evaluation.
         leaf_value: the value of subtree evaluation from the current player's
             perspective.
@@ -57,14 +60,29 @@ class TreeNode(object):
         self._n_visits += 1
         # Update Q, a running average of values for all visits.
         self._Q += 1.0*(leaf_value - self._Q) / self._n_visits
+        #如果_child 全lose 则当前update为win。仅当child 更新为lose 的时候，触发父节点的win检查。
+        if child_result == 'lose':
+            ALL_LOSE = True
+            for act, _sub_node in self._children.items():
+                if _sub_node._lose == False:
+                    ALL_LOSE = False
+                    break
+            if ALL_LOSE:
+                self.mark_win()
+                return 'win'
+        #如果任何一个子节点 win了，则当前节点update为lose
+        if child_result == 'win':
+            self.mark_lose()
+            return 'lose'
+        return None
 
-    def update_recursive(self, leaf_value):
+    def update_recursive(self, leaf_value,child_result = None):
         """Like a call to update(), but applied recursively for all ancestors.
         """
         # If it is not root, this node's parent should be updated first.
-        self.update(leaf_value)
+        result = self.update(leaf_value,child_result)
         if self._parent:
-            self._parent.update_recursive(-leaf_value)
+            self._parent.update_recursive(-leaf_value,result)
 
     def get_value(self, c_puct):
         """Calculate and return the value for this node.
@@ -73,6 +91,11 @@ class TreeNode(object):
         c_puct: a number in (0, inf) controlling the relative impact of
             value Q, and prior probability P, on this node's score.
         """
+        if self._win :
+            return 1
+        if self._lose :
+            return 0
+        
         self._u = (c_puct * self._P *
                    np.sqrt(self._parent._n_visits) / (1 + self._n_visits))
         return self._Q + self._u
@@ -83,6 +106,13 @@ class TreeNode(object):
 
     def is_root(self):
         return self._parent is None
+
+    #TODO 对于终结节点，处理一下相关节点的其他参数。
+    def mark_lose(self):
+        self._lose = True
+
+    def mark_win(self):
+        self._win = True
 
 
 class MCTS(object):
@@ -108,7 +138,6 @@ class MCTS(object):
         the leaf and propagating it back through its parents.
         State is modified in-place, so a copy must be provided.
         """
-        current_player = state.get_current_player()
         node = self._root
         while(1):
             if node.is_leaf():
@@ -122,14 +151,24 @@ class MCTS(object):
         # for the current player.
         # Check for end of game.
         #end, winner = state.game_end()
+        action_probs, leaf_value = self._policy(state)
+        node.expand(action_probs)
+        #当前局面下，轮到对手下棋，如果对方有VCF策略，则当前方输了。
+        child_result = None
         win_move,_vcf_path = state.VCF()
         if win_move:
             leaf_value = -1
+            node.mark_lose()
+            node._children[win_move].mark_win()
+            child_result = 'win'
         else:
-            action_probs, leaf_value = self._policy(state)
-            node.expand(action_probs)
+            if state.get_current_player() == 1:#如果是黑棋，得给禁手都标个lose
+                for act, _sub_node in node._children.items():
+                    if state.isForbidden(RenjuBoard.num2coordinate(act)):
+                        _sub_node.mark_lose()
+                        child_result = 'lose'
 
-        node.update_recursive(-1 * leaf_value)
+        node.update_recursive(-leaf_value,child_result) #TODO 这个值的符号到底对不对
         return False
 
     def get_move_probs(self, state, temp=1e-3):
