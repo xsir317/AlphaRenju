@@ -102,17 +102,33 @@ class TreeNode(object):
 
     def is_leaf(self):
         """Check if leaf node (i.e. no nodes below this have been expanded)."""
-        return self._children == {}
+        return self._children == {} or self._win or self._lose
 
     def is_root(self):
         return self._parent is None
 
-    #TODO 对于终结节点，处理一下相关节点的其他参数。
     def mark_lose(self):
         self._lose = True
+        
+        for act, _sub_node in self._children.items():
+            if _sub_node._win == False :
+                _sub_node._children = {}
+                _sub_node._P = 0
+                _sub_node._n_visits = 1
+        self._n_visits = 0
+        self._Q = 0
+        self._u = 0
+        self._P = 0
+        self._win = False
 
     def mark_win(self):
         self._win = True
+        
+        self._n_visits = 0
+        self._Q = 0
+        self._u = 0
+        self._P = 1
+        self._lose = False
 
 
 class MCTS(object):
@@ -139,6 +155,7 @@ class MCTS(object):
         State is modified in-place, so a copy must be provided.
         """
         node = self._root
+        player = state.get_current_player()
         while(1):
             if node.is_leaf():
                 break
@@ -150,26 +167,38 @@ class MCTS(object):
         # (action, probability) tuples p and also a score v in [-1, 1]
         # for the current player.
         # Check for end of game.
-        #end, winner = state.game_end()
-        action_probs, leaf_value = self._policy(state)
-        node.expand(action_probs)
-        #当前局面下，轮到对手下棋，如果对方有VCF策略，则当前方输了。
-        child_result = None
-        win_move,_vcf_path = state.VCF()
-        if win_move:
-            leaf_value = -1
-            node.mark_lose()
-            node._children[win_move].mark_win()
+        if node._win :
+            leaf_value = 1.0
+            child_result = 'lose'
+        elif node._lose :
+            leaf_value = -1.0
             child_result = 'win'
         else:
-            if state.get_current_player() == 1:#如果是黑棋，得给禁手都标个lose
-                for act, _sub_node in node._children.items():
-                    if state.isForbidden(RenjuBoard.num2coordinate(act)):
-                        _sub_node.mark_lose()
+            child_result = None
+            end, winner = state.game_end()
+            if end:
+                if winner == -1:  # tie
+                    leaf_value = 0.0
+                else:
+                    if winner == player:
+                        leaf_value = 1.0
                         child_result = 'lose'
+                    else:
+                        leaf_value = -1.0
+                        child_result = 'win'
+            else:
+                action_probs, leaf_value = self._policy(state)
+                node.expand(action_probs)
+                #当前局面下，轮到对手下棋，如果对方有VCF策略，则当前方输了。
+                win_move,_vcf_path = state.VCF()
+                if win_move:
+                    leaf_value = -1.0
+                    node.mark_lose()
+                    node._children[win_move].mark_win()
+                    child_result = 'win'
 
         node.update_recursive(-leaf_value,child_result) #TODO 这个值的符号到底对不对
-        return False
+        return self._root._win or self._root._lose
 
     def get_move_probs(self, state, temp=1e-3):
         """Run all playouts sequentially and return the available actions and
@@ -178,6 +207,8 @@ class MCTS(object):
         temp: temperature parameter in (0, 1] controls the level of exploration
         """
         for n in range(self._n_playout):
+            if n % 100 == 0:
+                print ("playout",n)
             state_copy = copy.deepcopy(state)
             if self._playout(state_copy):
                 break

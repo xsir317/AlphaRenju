@@ -115,7 +115,7 @@ class RenjuBoard(object):
             self.current = to
         return self._()
 
-    def setStone(self,stone = '.',coordinate = []):
+    def setStone(self,stone = 0,coordinate = []):
         if len(coordinate) == 0:
             coordinate = self.current
         self.board[coordinate[0] -1][coordinate[1] -1] = stone
@@ -270,9 +270,13 @@ class RenjuBoard(object):
             return False
         return (self.isOverline(coordinate) or self.isDoubleFour(coordinate) or self.isDoubleThree(coordinate))
 
+    
     def VCF(self):
         vcf_path = []
         return_str = ''
+        expands = []
+        win = False
+        win_by_forbidden = False
         
         #谁在冲四，谁在防
         attacker = (RenjuBoard.BLACK_STONE if self.get_current_player() else RenjuBoard.WHITE_STONE)
@@ -299,10 +303,9 @@ class RenjuBoard(object):
                         return False,[ _c.copy() ]
                 return False,[] #几个冲四点都没匹配，并不能反冲四，则此局面的确没有可行方案
             return False,collect
-        expands = []
-        
-        win = False
-        win_by_forbidden = False
+
+
+
         while True:
             win , availables = expand_vcf(self)
             if win :
