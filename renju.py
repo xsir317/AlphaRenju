@@ -28,8 +28,6 @@ class RenjuBoard(object):
         self.reset(init)
 
     def reset(self,init = ''):
-        self.width = 15
-        self.height = 15
         self.last_move = 0
         self.availables = [i for i in range(225)]
 
@@ -482,7 +480,7 @@ class RenjuBoard(object):
 
     
     def current_state(self):
-        square_state = np.zeros((3, self.width, self.height))
+        square_state = np.zeros((3, 15, 15))
         for i in range(15):
             for j in range(15):
                 ijstone = self._([i+1,j+1])

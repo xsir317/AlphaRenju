@@ -1,19 +1,15 @@
 from game import Game
 import numpy as np
 from policy_value_net import PolicyValueNet
-from players import MCTSPlayer
+from players import MasterPlayer
 from collections import deque
 import random
 
 #new policy network
 #new Game
 #set game player
-init_model = './renju'
+init_model = './master'
 policy_value_net = PolicyValueNet(model_file=init_model)
-
-#new MCTS
-player = MCTSPlayer(policy_value_net.policy_value_fn,5,1200,is_selfplay = 1)
-game = Game(player,player)
 
 
 def get_equi_data( play_data):
@@ -90,14 +86,17 @@ def policy_update(game_data,policy_value_net):
                     explained_var_new))
     return loss, entropy
 
+
+master = MasterPlayer()
+
 i = 0
 bucket = deque(maxlen=3000)
+
 
 while True:
     i += 1
     #game.do_play
-    winner, game_data = game.do_play()
-    player.reset_player()
+    game_data = master.get_train_game()
     #get game data
     game_data = get_equi_data(game_data)
     bucket.extend(game_data)

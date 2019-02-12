@@ -1,5 +1,6 @@
 import numpy as np
 from mcts_alphaZero import MCTS
+from renju import RenjuBoard
 
 class Human(object):
     def __init__(self):
@@ -7,10 +8,13 @@ class Human(object):
     
     def get_action(self, board):
         location = input("Your move: (11 to ff)")
-        if location not in board.availables:
+        move_number = RenjuBoard.pos2number(location.strip())
+        if move_number not in board.availables:
             print("invalid move")
             location = self.get_action(board)
-        return location,None
+        prob = np.zeros(15*15)
+        prob[move_number] = 1.0
+        return move_number,prob
 
     def __str__(self):
         return "Human"
@@ -56,3 +60,44 @@ class MCTSPlayer(object):
 #                location = board.move_to_location(move)
 #                print("AI move: %d,%d\n" % (location[0], location[1]))
         return move, move_probs
+
+
+class MasterPlayer(object):
+    """Master reads human game records"""
+
+    def __init__(self,train_target = './master', game_source = './games.log',jump_line = 0):
+        self.file_reader = open(game_source, 'r')
+        self.board = RenjuBoard()
+
+    def get_train_game(self):
+        game_string = self.file_reader.readline()
+        print (game_string)
+        self.board.reset()
+        game_string = game_string.strip()
+        states, mcts_probs = [], []
+        #获得game 的记录和结果， 做一堆和self play 差不多的数据返回回去
+        game_result = game_string.split(",")
+        winner = int(game_result[1])
+        for i in range(0,len(game_result[0]),2):
+            pos = game_result[0][i:i+2]
+            move_probs = np.zeros(15*15)
+            move_number = RenjuBoard.pos2number(pos)
+            move_probs[move_number] = 1.0
+            # store the data
+
+            states.append(self.board.current_state())
+            mcts_probs.append(move_probs)
+            self.board.do_move(pos)
+            #self.board._debug_board()
+            #if len(states) >= 5:
+        total_moves = len(states)
+        if winner == -1:
+            winner_map = [ 0 for _i in range(total_moves)]
+            print("draw")
+        elif winner == 0: #white win
+            winner_map = [ _i%2 for _i in range(total_moves)]
+            print("WHITE_WIN")
+        else:
+            winner_map = [ (_i+1)%2 for _i in range(total_moves)]
+            print("BLACK_WIN")
+        return zip(states, mcts_probs,winner_map)
