@@ -306,6 +306,9 @@ class RenjuBoard(object):
             win , availables = expand_vcf(self)
             if win :
                 break
+            #一个优化，如果len(vcf_path) == 0 而且 availables也是空的，那么就是第一个局面就发现全盘无冲四，直接返回失败。
+            if len(vcf_path) == 0 and len(availables) == 0:
+                return None , ''
             expands.append(availables)
 
             while True:
