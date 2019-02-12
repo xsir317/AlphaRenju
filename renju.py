@@ -33,23 +33,7 @@ class RenjuBoard(object):
         self.last_move = 0
         self.availables = [i for i in range(225)]
 
-        self.board = [
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
-        ]
+        self.board = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,]
         self.current = [1,1]
         i = 0
     
@@ -62,9 +46,9 @@ class RenjuBoard(object):
         for x in range(15):
             return_str += "{:x}".format(x+1).center(4)
         return_str += "\r\n"
-        for i in range(15):
-            return_str += "{:x}".format(i+1)
-            for j in range(15):
+        for i in range(1,16):
+            return_str += "{:x}".format(i)
+            for j in range(1,16):
                 if self._([i,j]) == RenjuBoard.BLACK_STONE:
                     return_str += '●'.center(3)
                 elif self._([i,j]) == RenjuBoard.WHITE_STONE:
@@ -118,7 +102,15 @@ class RenjuBoard(object):
     def setStone(self,stone = 0,coordinate = []):
         if len(coordinate) == 0:
             coordinate = self.current
-        self.board[coordinate[0] -1][coordinate[1] -1] = stone
+        
+        row = self.board[coordinate[0] -1]
+        row &= ~(1 << (coordinate[1] -1))
+        row &= ~(1 << (coordinate[1] -1 + 16))
+        if stone == self.WHITE_STONE:
+            row |= (1 << (coordinate[1] -1 + 16))
+        elif stone == self.BLACK_STONE:
+            row |= (1 << (coordinate[1] -1))
+        self.board[coordinate[0] -1] = row
 
     def moveDirection(self,direction):
         next = [
@@ -133,7 +125,11 @@ class RenjuBoard(object):
     def _(self,coordinate = []):
         if len(coordinate) == 0:
             coordinate = self.current
-        return self.board[coordinate[0] -1][coordinate[1] -1]
+        if self.board[coordinate[0] - 1] & (1 << coordinate[1] - 1) :
+            return self.BLACK_STONE
+        if self.board[coordinate[0] - 1] & (1 << coordinate[1] - 1 + 16):
+            return self.WHITE_STONE
+        return self.EMPTY_STONE
 
     def count_stone(self,coordinate,shape):
         color = self._(coordinate)
@@ -388,9 +384,17 @@ class RenjuBoard(object):
         
         counting = 0
         for row in self.board:
-            counting += row.count(RenjuBoard.EMPTY_STONE)
-            if counting > 1:
-                return False , -1
+            row_white = row >> 16
+            row_black = row & 131071
+            row_stones = row_black | row_white
+            row_empty = 131071 - row_stones
+            while row_empty > 0:
+                if row_empty % 2:
+                    counting += 1
+                    if counting > 1:
+                        return False , -1
+                row_empty = row_empty >> 1
+            
         return True, RenjuBoard.DRAW
 
     def gomokuCheckWin(self,coordinate,color):
