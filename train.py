@@ -10,19 +10,8 @@ init_model = 'renju'
 policy_value_net = PolicyValueNet(model_file=init_model)
 
 #new MCTS
-player = MCTSPlayer(policy_value_net.policy_value_fn,5,2000,1)
+player = MCTSPlayer(policy_value_net.policy_value_fn,5,400,is_selfplay = 1)
 game = Game(player,player)
-
-
-while True:
-    #game.do_play
-    winner, game_data = game.do_play()
-    game_data = list(game_data)[:]
-    #get game data
-    game_data = get_equi_data(game_data)
-    #train ,update policy and save
-    policy_update(game_data,policy_value_net)
-    policy_value_net.save_model(init_model)
 
 
 def get_equi_data( play_data):
@@ -98,3 +87,15 @@ def policy_update(game_data,policy_value_net):
                     explained_var_old,
                     explained_var_new))
     return loss, entropy
+
+
+
+while True:
+    #game.do_play
+    winner, game_data = game.do_play()
+    game_data = list(game_data)[:]
+    #get game data
+    game_data = get_equi_data(game_data)
+    #train ,update policy and save
+    policy_update(game_data,policy_value_net)
+    policy_value_net.save_model(init_model)

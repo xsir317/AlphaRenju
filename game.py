@@ -15,15 +15,17 @@ class Game(object):
         states, mcts_probs = [], []
         while True:
             player = self.player2
+            debug_stone = '◯'
             if self.board.get_current_player():
                 player = self.player1
+                debug_stone = '●'
             move, move_probs = player.get_action(self.board)
             # store the data
             states.append(self.board.current_state())
             mcts_probs.append(move_probs)
             # perform a move
             self.board.do_move_by_number(move)
-            print ("player: ",self.board.get_current_player())
+            print ("player: ",debug_stone)
             self.board._debug_board()
             end, winner = self.board.game_end()
             if end:
@@ -38,4 +40,3 @@ class Game(object):
                     winner_map = [ (_i+1)%2 for _i in range(total_moves)]
                     print("BLACK_WIN")
                 return winner, [states, mcts_probs,winner_map]
-        

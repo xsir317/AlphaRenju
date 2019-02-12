@@ -114,7 +114,7 @@ class TreeNode(object):
             if _sub_node._win == False :
                 _sub_node._children = {}
                 _sub_node._P = 0
-                _sub_node._n_visits = 1
+                _sub_node._n_visits = 0
         self._n_visits = 0
         self._Q = 0
         self._u = 0
@@ -124,7 +124,7 @@ class TreeNode(object):
     def mark_win(self):
         self._win = True
         
-        self._n_visits = 0
+        #self._n_visits = 0
         self._Q = 0
         self._u = 0
         self._P = 1
@@ -193,11 +193,11 @@ class MCTS(object):
                 win_move,_vcf_path = state.VCF()
                 if win_move:
                     leaf_value = -1.0
-                    node.mark_lose()
+                    #node.mark_lose() 这个在后面的update里做过了
                     node._children[win_move].mark_win()
                     child_result = 'win'
 
-        node.update_recursive(-leaf_value,child_result) #TODO 这个值的符号到底对不对
+        node.update_recursive(leaf_value,child_result) #TODO 这个值的符号到底对不对
         return self._root._win or self._root._lose
 
     def get_move_probs(self, state, temp=1e-3):
