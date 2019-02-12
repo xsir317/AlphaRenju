@@ -178,10 +178,10 @@ class MCTS(object):
             child_result = None
             end, winner = state.game_end()
             if end:
-                if winner == -1:  # tie
+                if winner == RenjuBoard.DRAW:  # tie
                     leaf_value = 0.0
                 else:
-                    if winner == player:
+                    if (player == 1 and winner == RenjuBoard.BLACK_WIN) or (player == 0 and winner == RenjuBoard.WHITE_WIN):
                         leaf_value = 1.0
                         child_result = 'lose'
                     else:
