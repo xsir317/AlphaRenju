@@ -43,6 +43,7 @@ class TreeNode(object):
         for action, prob in action_priors:
             if action not in self._children:
                 self._children[action] = TreeNode(self, prob)
+        self._remain_count = len(self._children)
 
     def select(self, c_puct):
         """Select action among children that gives maximum action value Q
@@ -63,12 +64,8 @@ class TreeNode(object):
         self._Q += 1.0*(leaf_value - self._Q) / self._n_visits
         #如果_child 全lose 则当前update为win。仅当child 更新为lose 的时候，触发父节点的win检查。
         if child_result == 'lose':
-            _remain_count = 0
-            for act, _sub_node in self._children.items():
-                if not _sub_node._lose:
-                    _remain_count += 1
-            self._remain_count = _remain_count
-            if _remain_count == 0:
+            self._remain_count -= 1
+            if self._remain_count == 0:
                 self.mark_win()
                 return 'win'
         #如果任何一个子节点 win了，则当前节点update为lose
