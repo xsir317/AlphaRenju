@@ -27,6 +27,7 @@ class TreeNode(object):
     def __init__(self, parent, prior_p):
         self._parent = parent
         self._children = {}  # a map from action to TreeNode
+        self._remain_count = 0
         self._n_visits = 0
         self._Q = 0
         self._u = 0
@@ -62,12 +63,12 @@ class TreeNode(object):
         self._Q += 1.0*(leaf_value - self._Q) / self._n_visits
         #如果_child 全lose 则当前update为win。仅当child 更新为lose 的时候，触发父节点的win检查。
         if child_result == 'lose':
-            ALL_LOSE = True
+            _remain_count = 0
             for act, _sub_node in self._children.items():
-                if _sub_node._lose == False:
-                    ALL_LOSE = False
-                    break
-            if ALL_LOSE:
+                if not _sub_node._lose:
+                    _remain_count += 1
+            self._remain_count = _remain_count
+            if _remain_count == 0:
                 self.mark_win()
                 return 'win'
         #如果任何一个子节点 win了，则当前节点update为lose
@@ -91,10 +92,10 @@ class TreeNode(object):
         c_puct: a number in (0, inf) controlling the relative impact of
             value Q, and prior probability P, on this node's score.
         """
+        if self._lose :
+            return -999
         if self._win :
             return 1
-        if self._lose :
-            return 0
         
         self._u = (c_puct * self._P *
                    np.sqrt(self._parent._n_visits) / (1 + self._n_visits))
@@ -198,7 +199,7 @@ class MCTS(object):
                     child_result = 'win'
 
         node.update_recursive(-leaf_value,child_result) #TODO 这个值的符号到底对不对
-        root_result = self._root._win or self._root._lose
+        root_result = self._root._win or self._root._lose or self._root._remain_count == 1
         if root_result:
             state._debug_board()
         return root_result
