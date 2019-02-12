@@ -41,7 +41,6 @@ class MCTSPlayer(object):
                 p=0.75*probs + 0.25*np.random.dirichlet(0.3*np.ones(len(probs)))
             )
             #debug
-            print (move_probs)
             print ("choose ",move ,"by prob ",move_probs[move])
             print ("best move is ", best_move, best_chance)
             # update the root node and reuse the search tree
