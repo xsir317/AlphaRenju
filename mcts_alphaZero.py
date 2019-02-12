@@ -71,7 +71,7 @@ class TreeNode(object):
                 self.mark_win()
                 return 'win'
         #如果任何一个子节点 win了，则当前节点update为lose
-        if child_result == 'win':
+        elif child_result == 'win':
             self.mark_lose()
             return 'lose'
         return None
@@ -115,7 +115,7 @@ class TreeNode(object):
                 _sub_node._children = {}
                 _sub_node._P = 0
                 _sub_node._n_visits = 0
-        self._n_visits = 0
+        #self._n_visits = 0
         self._Q = 0
         self._u = 0
         self._P = 0
@@ -197,8 +197,11 @@ class MCTS(object):
                     node._children[win_move].mark_win()
                     child_result = 'win'
 
-        node.update_recursive(leaf_value,child_result) #TODO 这个值的符号到底对不对
-        return self._root._win or self._root._lose
+        node.update_recursive(-leaf_value,child_result) #TODO 这个值的符号到底对不对
+        root_result = self._root._win or self._root._lose
+        if root_result:
+            state._debug_board()
+        return root_result
 
     def get_move_probs(self, state, temp=1e-3):
         """Run all playouts sequentially and return the available actions and
@@ -211,6 +214,7 @@ class MCTS(object):
                 print ("playout",n)
             state_copy = copy.deepcopy(state)
             if self._playout(state_copy):
+                print ("got conclusion on root")
                 break
 
         # calc the move probabilities based on visit counts at the root node
