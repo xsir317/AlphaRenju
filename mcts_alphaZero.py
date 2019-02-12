@@ -153,7 +153,7 @@ class MCTS(object):
         State is modified in-place, so a copy must be provided.
         """
         node = self._root
-        player = state.get_current_player()
+        player = state.get_current_player() #疑似应当是刚刚落子的那一方。
         while(1):
             if node.is_leaf():
                 break
@@ -219,7 +219,7 @@ class MCTS(object):
         act_visits = [(act, node._n_visits)
                       for act, node in self._root._children.items()]
         acts, visits = zip(*act_visits)
-        #TODO root 输了的时候的特殊处理，不处理的话会不会所有点visit都是0 
+        #TODO root 输了的时候的特殊处理，不处理的话会不会所有点visit都是0  ; root 会挪动，可能是挪动到了子节点被清空的节点上去了？
         #remain 剩一个的时候，playout 直接跳出了。遍历一下，选择那个剩下的。
         #另外”当前“ 的身份好像还是不太对啊。。。
             
