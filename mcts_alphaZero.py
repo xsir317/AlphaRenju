@@ -113,7 +113,7 @@ class TreeNode(object):
                 _sub_node._children = {}
                 _sub_node._P = 0
                 _sub_node._n_visits = 0
-        #self._n_visits = 0
+        self._n_visits = 0
         self._Q = 0
         self._u = 0
         self._P = 0
@@ -195,7 +195,7 @@ class MCTS(object):
                     node._children[win_move].mark_win()
                     child_result = 'win'
 
-        node.update_recursive(-leaf_value,child_result) #TODO 这个值的符号到底对不对
+        node.update_recursive(leaf_value,child_result) #TODO 这个值的符号到底对不对
         root_result = self._root._win or self._root._lose or self._root._remain_count == 1
         if root_result:
             state._debug_board()
@@ -209,7 +209,7 @@ class MCTS(object):
         """
         for n in range(self._n_playout):
             if n % 100 == 0:
-                print ("playout",n)
+                print ("playout",n," root remain:" ,self._root._remain_count)
             state_copy = copy.deepcopy(state)
             if self._playout(state_copy):
                 print ("got conclusion on root")
@@ -219,6 +219,10 @@ class MCTS(object):
         act_visits = [(act, node._n_visits)
                       for act, node in self._root._children.items()]
         acts, visits = zip(*act_visits)
+        #TODO root 输了的时候的特殊处理，不处理的话会不会所有点visit都是0 
+        #remain 剩一个的时候，playout 直接跳出了。遍历一下，选择那个剩下的。
+        #另外”当前“ 的身份好像还是不太对啊。。。
+            
         act_probs = softmax(1.0/temp * np.log(np.array(visits) + 1e-10))
 
         return acts, act_probs
