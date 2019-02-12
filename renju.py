@@ -266,6 +266,14 @@ class RenjuBoard(object):
             return False
         return (self.isOverline(coordinate) or self.isDoubleFour(coordinate) or self.isDoubleThree(coordinate))
 
+    def Find_win(self):
+        attacker = (RenjuBoard.BLACK_STONE if self.get_current_player() else RenjuBoard.WHITE_STONE)
+        for i in range(1,16):
+                for j in range(1,16):
+                    if self.isFive([i,j],attacker):
+                        return RenjuBoard.pos2number(RenjuBoard.coordinate2pos([i,j]))
+        return False
+
     
     def VCF(self):
         vcf_path = []
@@ -273,7 +281,7 @@ class RenjuBoard(object):
         expands = []
         win = False
         win_by_forbidden = False
-        
+
         #谁在冲四，谁在防
         attacker = (RenjuBoard.BLACK_STONE if self.get_current_player() else RenjuBoard.WHITE_STONE)
         defender = RenjuBoard.get_oppo(attacker)

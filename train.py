@@ -6,11 +6,11 @@ from players import MCTSPlayer
 #new policy network
 #new Game
 #set game player
-init_model = 'renju'
+init_model = './renju'
 policy_value_net = PolicyValueNet(model_file=init_model)
 
 #new MCTS
-player = MCTSPlayer(policy_value_net.policy_value_fn,5,400,is_selfplay = 1)
+player = MCTSPlayer(policy_value_net.policy_value_fn,5,1200,is_selfplay = 1)
 game = Game(player,player)
 
 
@@ -93,7 +93,6 @@ def policy_update(game_data,policy_value_net):
 while True:
     #game.do_play
     winner, game_data = game.do_play()
-    game_data = list(game_data)[:]
     #get game data
     game_data = get_equi_data(game_data)
     #train ,update policy and save

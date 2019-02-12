@@ -1,4 +1,5 @@
 from renju import RenjuBoard
+import numpy as np
 
 #一个游戏，要有一个棋盘，2个玩家，胜负结果，和返回数据。
 
@@ -23,13 +24,17 @@ class Game(object):
             # store the data
             states.append(self.board.current_state())
             mcts_probs.append(move_probs)
+            #print(move_probs)
             # perform a move
             self.board.do_move_by_number(move)
             print ("player: ",debug_stone)
             self.board._debug_board()
+            #if len(states) >= 5:
             end, winner = self.board.game_end()
             if end:
+                winner = RenjuBoard.WHITE_WIN
                 total_moves = len(states)
+
                 if winner == RenjuBoard.DRAW:
                     winner_map = [ 0 for _i in range(total_moves)]
                     print("draw")
@@ -39,4 +44,4 @@ class Game(object):
                 else:
                     winner_map = [ (_i+1)%2 for _i in range(total_moves)]
                     print("BLACK_WIN")
-                return winner, [states, mcts_probs,winner_map]
+                return winner, zip(states, mcts_probs,winner_map)

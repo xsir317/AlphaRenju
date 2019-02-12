@@ -110,7 +110,7 @@ class TreeNode(object):
         
         for act, _sub_node in self._children.items():
             if _sub_node._win == False :
-                _sub_node._children = {}
+                #_sub_node._children = {}
                 _sub_node._P = 0
                 _sub_node._n_visits = 0
         self._n_visits = 0
@@ -153,7 +153,6 @@ class MCTS(object):
         State is modified in-place, so a copy must be provided.
         """
         node = self._root
-        player = state.get_current_player() #疑似应当是刚刚落子的那一方。
         while(1):
             if node.is_leaf():
                 break
@@ -165,6 +164,7 @@ class MCTS(object):
         # (action, probability) tuples p and also a score v in [-1, 1]
         # for the current player.
         # Check for end of game.
+        player = 1 - state.get_current_player() #应当是刚刚落子的那一方。
         if node._win :
             leaf_value = 1.0
             child_result = 'lose'
@@ -181,6 +181,7 @@ class MCTS(object):
                     if (player == 1 and winner == RenjuBoard.BLACK_WIN) or (player == 0 and winner == RenjuBoard.WHITE_WIN):
                         leaf_value = 1.0
                         child_result = 'lose'
+                        node.mark_win()
                     else:
                         leaf_value = -1.0
                         child_result = 'win'
@@ -188,7 +189,7 @@ class MCTS(object):
                 action_probs, leaf_value = self._policy(state)
                 node.expand(action_probs)
                 #当前局面下，轮到对手下棋，如果对方有VCF策略，则当前方输了。
-                win_move,_vcf_path = state.VCF()
+                win_move = state.Find_win()
                 if win_move:
                     leaf_value = -1.0
                     #node.mark_lose() 这个在后面的update里做过了
@@ -197,8 +198,6 @@ class MCTS(object):
 
         node.update_recursive(leaf_value,child_result) #TODO 这个值的符号到底对不对
         root_result = self._root._win or self._root._lose or self._root._remain_count == 1
-        if root_result:
-            state._debug_board()
         return root_result
 
     def get_move_probs(self, state, temp=1e-3):
@@ -207,24 +206,40 @@ class MCTS(object):
         state: the current game state
         temp: temperature parameter in (0, 1] controls the level of exploration
         """
+        conclusion = False
         for n in range(self._n_playout):
             if n % 100 == 0:
                 print ("playout",n," root remain:" ,self._root._remain_count)
             state_copy = copy.deepcopy(state)
-            if self._playout(state_copy):
+            conclusion = self._playout(state_copy)
+            if conclusion:
                 print ("got conclusion on root")
                 break
 
-        # calc the move probabilities based on visit counts at the root node
-        act_visits = [(act, node._n_visits)
-                      for act, node in self._root._children.items()]
-        acts, visits = zip(*act_visits)
-        #TODO root 输了的时候的特殊处理，不处理的话会不会所有点visit都是0  ; root 会挪动，可能是挪动到了子节点被清空的节点上去了？
+        #TODO root 输了的时候的特殊处理，不处理的话会不会所有点visit都是0
         #remain 剩一个的时候，playout 直接跳出了。遍历一下，选择那个剩下的。
-        #另外”当前“ 的身份好像还是不太对啊。。。
-            
+        if conclusion:
+            act_visits = []
+            for act, node in self._root._children.items():
+                if self._root._win:
+                    act_visits.append((act,node._n_visits + 1))
+                elif self._root._lose:
+                    if node._win:
+                        act_visits.append((act,100))
+                    else:
+                        act_visits.append((act,0))
+                elif self._root._remain_count == 1:
+                    if node._lose:
+                        act_visits.append((act,0))
+                    else:
+                        act_visits.append((act,node._n_visits + 1))
+        else:
+            # calc the move probabilities based on visit counts at the root node
+            act_visits = [(act, node._n_visits)
+                        for act, node in self._root._children.items()]
+        acts, visits = zip(*act_visits)
+        print (visits)
         act_probs = softmax(1.0/temp * np.log(np.array(visits) + 1e-10))
-
         return acts, act_probs
 
     def update_with_move(self, last_move):

@@ -33,20 +33,24 @@ class MCTSPlayer(object):
         move_probs = np.zeros(15*15)
         acts, probs = self.mcts.get_move_probs(board, temp)
         move_probs[list(acts)] = probs
+        best_chance = np.max(move_probs)
+        best_move = np.where(move_probs == best_chance)[0][0]
         if self._is_selfplay:
             move = np.random.choice(
                 acts,
                 p=0.75*probs + 0.25*np.random.dirichlet(0.3*np.ones(len(probs)))
             )
             #debug
+            print (move_probs)
             print ("choose ",move ,"by prob ",move_probs[move])
+            print ("best move is ", best_move, best_chance)
             # update the root node and reuse the search tree
             self.mcts.update_with_move(move)
         else:
             # with the default temp=1e-3, it is almost equivalent
             # to choosing the move with the highest prob
             #move = np.random.choice(acts, p=probs)
-            move = sorted(acts,probs)
+            move = best_move
             #TODO 按照prob排序取最好的，不要random？
             # reset the root node
             self.mcts.update_with_move(-1)

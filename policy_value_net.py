@@ -99,6 +99,9 @@ class PolicyValueNet():
         self.saver = tf.train.Saver()
         if model_file is not None and tf.train.checkpoint_exists(model_file):
             self.restore_model(model_file)
+            print ("restore from :" , model_file)
+        else:
+            print ("no file to load")
 
     def policy_value(self, state_batch):
         """

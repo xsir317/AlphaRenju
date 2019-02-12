@@ -13,6 +13,9 @@ try to solve the reju game with AlphaZero- like algorithm
  * Alpha beta  http://www.wukai.me/2018/03/04/minimax-alpha-beta-pruning-and-tic-tac-toe/
  * Tensorflow 到底是怎么对照学习的。。。 还是得参考那个Alpha_Gomoku 的代码。  tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
  * 这个我比较关注 https://blog.csdn.net/chengcheng1394/article/details/79526474 这里说到了一些细节
- * TODO 残差网络 https://blog.csdn.net/liangyihuai/article/details/79140481 https://blog.csdn.net/qq_29462849/article/details/80744522 https://blog.csdn.net/diamonjoy_zone/article/details/70904212 https://www.jianshu.com/p/655caf23ebc8
+ * TODO 残差网络 https://blog.csdn.net/liangyihuai/article/details/79140481 
+ * https://blog.csdn.net/qq_29462849/article/details/80744522 
+ * https://blog.csdn.net/diamonjoy_zone/article/details/70904212 
+ * https://www.jianshu.com/p/655caf23ebc8
  
 
