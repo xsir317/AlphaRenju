@@ -132,7 +132,7 @@ class TreeNode(object):
 class MCTS(object):
     """An implementation of Monte Carlo Tree Search."""
 
-    def __init__(self, policy_value_fn, c_puct=5, n_playout=10000):
+    def __init__(self, policy_value_fn, c_puct=5, n_playout=10000,debug=False):
         """
         policy_value_fn: a function that takes in a board state and outputs
             a list of (action, probability) tuples and also a score in [-1, 1]
@@ -146,6 +146,12 @@ class MCTS(object):
         self._policy = policy_value_fn
         self._c_puct = c_puct
         self._n_playout = n_playout
+        self.debug_mode = debug
+
+    def _debug(self):
+        if self.debug_mode:
+            for act, _sub_node in self._root._children.items():
+                print(RenjuBoard.number2pos(act),"\tselect value ",_sub_node.get_value(self._c_puct),"\tvisits ",_sub_node._n_visits,"\tQ ",_sub_node._Q)
 
     def _playout(self, state):
         """Run a single playout from the root to the leaf, getting a value at
@@ -210,7 +216,7 @@ class MCTS(object):
         conclusion = False
         for n in range(self._n_playout):
             if n % 100 == 0:
-                print ("playout",n," root remain:" ,self._root._remain_count)
+                self._debug()
             state_copy = copy.deepcopy(state)
             conclusion = self._playout(state_copy)
             if conclusion:

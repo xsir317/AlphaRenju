@@ -64,12 +64,16 @@ class RenjuBoard(object):
         ]
 
     @staticmethod
+    def coordinate2pos(coordinate):
+        return "{:x}{:x}".format(coordinate[0],coordinate[1])
+
+    @staticmethod
     def pos2number(position):
         return (int(position[0],16) - 1) * 15 + int(position[1],16) - 1
 
     @staticmethod
-    def coordinate2pos(coordinate):
-        return "{:x}{:x}".format(coordinate[0],coordinate[1])
+    def number2pos(num):
+        return "{:x}{:x}".format((num // 15) + 1,(num % 15) + 1)
 
     @staticmethod
     def num2coordinate(num):
@@ -78,6 +82,10 @@ class RenjuBoard(object):
             (num % 15) + 1 ,
         ]
 
+    @staticmethod
+    def coordinate2number(coordinate):
+        return (coordinate[0] - 1) * 15 + coordinate[1] - 1
+ 
     def do_move(self,pos):
         num = RenjuBoard.pos2number(pos)
         self.do_move_by_number(num)
