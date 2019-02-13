@@ -188,7 +188,8 @@ class MCTS(object):
             else:
                 action_probs, leaf_value = self._policy(state)
                 node.expand(action_probs)
-                #当前局面下，轮到对手下棋，如果对方有VCF策略，则当前方输了。
+                #当前局面下，轮到对手下棋，如果对方有获胜策略，则当前方输了。 
+                #TODO 先Find_win ，如果能找到获胜手段，则可以避免一次 _policy 
                 win_move = state.Find_win()
                 if win_move:
                     leaf_value = -1.0
