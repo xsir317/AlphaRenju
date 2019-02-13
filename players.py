@@ -65,7 +65,7 @@ class MCTSPlayer(object):
 class MasterPlayer(object):
     """Master reads human game records"""
 
-    def __init__(self,train_target = './master', game_source = './games.log',jump_line = 0):
+    def __init__(self,game_source = './games.log',jump_line = 0):
         self.file_reader = open(game_source, 'r')
         self.board = RenjuBoard()
 

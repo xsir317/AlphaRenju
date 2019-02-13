@@ -12,6 +12,7 @@ import tensorflow as tf
 
 class PolicyValueNet():
     def __init__(self, model_file=None):
+        self.model_file = model_file
 
         # Define the tensorflow neural network
         # 1. Input:
@@ -97,9 +98,9 @@ class PolicyValueNet():
 
         # For saving and restoring
         self.saver = tf.train.Saver()
-        if model_file is not None and tf.train.checkpoint_exists(model_file):
-            self.restore_model(model_file)
-            print ("restore from :" , model_file)
+        if self.model_file is not None and tf.train.checkpoint_exists(self.model_file):
+            self.restore_model()
+            print ("restore from :" , self.model_file)
         else:
             print ("no file to load")
 
@@ -139,8 +140,8 @@ class PolicyValueNet():
                            self.learning_rate: lr})
         return loss, entropy
 
-    def save_model(self, model_path):
-        self.saver.save(self.session, model_path)
+    def save_model(self):
+        self.saver.save(self.session, self.model_file)
 
-    def restore_model(self, model_path):
-        self.saver.restore(self.session, model_path)
+    def restore_model(self):
+        self.saver.restore(self.session, self.model_file)
