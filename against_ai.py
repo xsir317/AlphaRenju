@@ -9,7 +9,7 @@ policy_value_net = PolicyValueNet(model_file=init_model)
 trainer = Trainer(policy_value_net)
 
 #new MCTS
-player_ai = MCTSPlayer(policy_value_net.policy_value_fn,5,2000,is_selfplay = 0)
+player_ai = MCTSPlayer(policy_value_net.policy_value_fn,5,5000,is_selfplay = 0)
 player_me = Human()
 game = Game(player_ai,player_me)
 
