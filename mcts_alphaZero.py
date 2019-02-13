@@ -192,16 +192,26 @@ class MCTS(object):
                         leaf_value = -1.0
                         child_result = 'win'
             else:
-                action_probs, leaf_value = self._policy(state)
-                node.expand(action_probs)
-                #当前局面下，轮到对手下棋，如果对方有获胜策略，则当前方输了。 
-                #TODO 先Find_win ，如果能找到获胜手段，则可以避免一次 _policy 
-                win_move = state.Find_win()
-                if win_move:
+                win_move,only_defense = state.Find_win()
+                if win_move is not None:
                     leaf_value = -1.0
+                    node.expand( MCTS._build_expand_prob(state.availables,win_move) )
                     #node.mark_lose() 这个在后面的update里做过了
                     node._children[win_move].mark_win()
                     child_result = 'win'
+                elif only_defense is not None:
+                    node.expand( MCTS._build_expand_prob(state.availables,only_defense) )
+                    node._remain_count = 1 #这里就剩唯一防了。
+                    print ("冲4唯一防",only_defense,"root remain",self._root._remain_count)
+                    for act, _sub_node in node._children.items():
+                        if act != only_defense:
+                            _sub_node.mark_lose()
+                    node = node._children[only_defense]
+                    state.do_move_by_number(only_defense)
+
+                action_probs, leaf_value = self._policy(state)
+                node.expand(action_probs)
+                #当前局面下，轮到对手下棋，如果对方有获胜策略，则当前方输了。 
 
         node.update_recursive(leaf_value,child_result) #TODO 这个值的符号到底对不对
         root_result = self._root._win or self._root._lose or self._root._remain_count == 1
@@ -257,6 +267,12 @@ class MCTS(object):
             self._root._parent = None
         else:
             self._root = TreeNode(None, 1.0)
+
+    @staticmethod
+    def _build_expand_prob(legal_positions,act):
+        probs = np.zeros(len(legal_positions))
+        probs[act] = 1
+        return zip(legal_positions, probs)
 
     def __str__(self):
         return "MCTS"
