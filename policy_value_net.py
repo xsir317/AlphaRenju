@@ -14,6 +14,7 @@ class PolicyValueNet():
     def __init__(self, model_file=None):
         self.model_file = model_file
 
+        #TODO https://github.com/NeymarL/ChineseChess-AlphaZero/blob/distributed/cchess_alphazero/agent/model.py 参考这个来弄一个残差网络，5层据说就很好用了。
         # Define the tensorflow neural network
         # 1. Input:
         self.input_states = tf.placeholder(
