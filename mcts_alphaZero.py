@@ -166,10 +166,7 @@ class MCTS(object):
             action, node = node.select(self._c_puct)
             state.do_move_by_number(action)
 
-        # Evaluate the leaf using a network which outputs a list of
-        # (action, probability) tuples p and also a score v in [-1, 1]
-        # for the current player.
-        # Check for end of game.
+        #TODO 需要优化逻辑。
         player = 1 - state.get_current_player() #应当是刚刚落子的那一方。
         leaf_value = None
         if node._win :
@@ -205,13 +202,19 @@ class MCTS(object):
                     node.mark_win()
                     child_result = 'lose'
                 elif only_defense is not None:
-                    node.expand( MCTS._build_expand_prob(state.availables,only_defense) )
-                    node._remain_count = 1 #这里就剩唯一防了。
-                    for act, _sub_node in node._children.items():
-                        if act != only_defense:
-                            _sub_node.mark_lose()
-                    node = node._children[only_defense]
-                    state.do_move_by_number(only_defense)
+                    #冲四点是禁手，那么child （黑棋）就绝望了， 白棋抓到了禁手 leaf_value = 1.0
+                    if state.get_current_player() == 1 and state.isForbidden(RenjuBoard.num2coordinate(only_defense)):
+                        leaf_value = 1.0
+                        node.mark_win()
+                        child_result = 'lose'
+                    else:
+                        node.expand( MCTS._build_expand_prob(state.availables,only_defense) )
+                        node._remain_count = 1 #这里就剩唯一防了。
+                        for act, _sub_node in node._children.items():
+                            if act != only_defense:
+                                _sub_node.mark_lose()
+                        node = node._children[only_defense]
+                        state.do_move_by_number(only_defense)
 
                 if leaf_value is None:
                     action_probs, leaf_value = self._policy(state)

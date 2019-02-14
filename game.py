@@ -38,9 +38,9 @@ class Game(object):
                     winner_map = [ 0 for _i in range(total_moves)]
                     print("draw")
                 elif winner == RenjuBoard.WHITE_WIN:
-                    winner_map = [ _i%2 for _i in range(total_moves)]
+                    winner_map = [ (_i%2) * 2 - 1 for _i in range(total_moves)]
                     print("WHITE_WIN")
                 else:
-                    winner_map = [ (_i+1)%2 for _i in range(total_moves)]
+                    winner_map = [ ((_i+1)%2)*2 - 1  for _i in range(total_moves)]
                     print("BLACK_WIN")
                 return winner, zip(states, mcts_probs,winner_map)

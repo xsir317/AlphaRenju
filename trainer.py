@@ -10,6 +10,7 @@ class Trainer(object):
         self.pv_net = pv_net
         self.bucket = deque(maxlen=3000)
         self.counter = 0
+        self.time_sum = 0.0
 
     @staticmethod
     def get_equi_data(play_data):
@@ -38,7 +39,6 @@ class Trainer(object):
     def policy_update(self,game_data):
         """update the policy-value net"""
         #define params
-        enter_time = time.time()
         lr_multiplier = 1.0  # adaptively adjust the learning rate based on KL
         learn_rate = 2e-3 
         kl_targ = 0.02
@@ -72,21 +72,18 @@ class Trainer(object):
         explained_var_new = (1 -
                                 np.var(np.array(winner_batch) - new_v.flatten()) /
                                 np.var(np.array(winner_batch)))
-        time_cost = time.time() - enter_time
         print(("kl:{:.5f},"
                 "lr_multiplier:{:.3f},"
                 "loss:{},"
                 "entropy:{},"
                 "explained_var_old:{:.3f},"
                 "explained_var_new:{:.3f},"
-                "time cost:{:2f}"
                 ).format(kl,
                         lr_multiplier,
                         loss,
                         entropy,
                         explained_var_old,
-                        explained_var_new,
-                        time_cost
+                        explained_var_new
                 ))
         return loss, entropy
 
@@ -96,5 +93,13 @@ class Trainer(object):
         self.bucket.extend(game_data)
         if len(self.bucket) > 512:
             train_data = random.sample(self.bucket, 512)
+            train_start = time.time()
             self.policy_update(train_data)
+            train_cost = time.time() - train_start
+            self.time_sum += train_cost
+            print ("train cost: {:2f} s".format(train_cost))
+
+        if self.time_sum > 120:
+            self.time_sum = 0
+            print ("save model!")
             self.pv_net.save_model()
