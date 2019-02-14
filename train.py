@@ -6,7 +6,8 @@ from trainer import Trainer
 #new policy network
 #new Game
 #set game player
-init_model = './renju'
+#init_model = './renju'
+init_model = './master'
 policy_value_net = PolicyValueNet(model_file=init_model)
 
 #new MCTS
@@ -19,4 +20,4 @@ trainer = Trainer(policy_value_net)
 while True:
     winner, game_data = game.do_play()
     player.reset_player()
-    trainer.feed(game_data)
+    #trainer.feed(game_data)

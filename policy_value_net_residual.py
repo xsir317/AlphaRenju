@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-An implementation of the policyValueNet in Tensorflow
-Tested in Tensorflow 1.4 and 1.5
-
-@author: Xiang Zhong
-"""
-
 import numpy as np
 import tensorflow as tf
 
@@ -15,27 +8,31 @@ class PolicyValueNet():
         self.model_file = model_file
         self.loss_weight = [1.0,0.1] # policy weight and value weight
 
-        #TODO https://github.com/NeymarL/ChineseChess-AlphaZero/blob/distributed/cchess_alphazero/agent/model.py 参考这个来弄一个残差网络，5层据说就很好用了。
-        # Define the tensorflow neural network
         # 1. Input:
         self.input_states = tf.placeholder(
                 tf.float32, shape=[None, 3, 15, 15])
         self.input_state = tf.transpose(self.input_states, [0, 2, 3, 1])
         # 2. Common Networks Layers
         self.conv1 = tf.layers.conv2d(inputs=self.input_state,
-                                      filters=32, kernel_size=[3, 3],
+                                      filters=256, kernel_size=[3, 3],
                                       padding="same", data_format="channels_last",
-                                      activation=tf.nn.relu)
-        self.conv2 = tf.layers.conv2d(inputs=self.conv1, filters=64,
-                                      kernel_size=[3, 3], padding="same",
-                                      data_format="channels_last",
-                                      activation=tf.nn.relu)
-        self.conv3 = tf.layers.conv2d(inputs=self.conv2, filters=128,
-                                      kernel_size=[3, 3], padding="same",
-                                      data_format="channels_last",
-                                      activation=tf.nn.relu)
+                                      activation=None)
+        self.conv1 = tf.layers.batch_normalization(self.conv1)
+        self.conv1 = tf.nn.relu(self.conv1)
+        
+        for i in range(5):
+            self.conv1 = self._build_residual_block(self.conv1, i)
+        
+        
+        self.conv1 = tf.layers.conv2d(inputs=self.conv1,
+                                      filters=256, kernel_size=[3, 3],
+                                      padding="same", data_format="channels_last",
+                                      activation=None)
+        self.conv1 = tf.layers.batch_normalization(self.conv1)
+        self.conv1 = tf.nn.relu(self.conv1)
+
         # 3-1 Action Networks
-        self.action_conv = tf.layers.conv2d(inputs=self.conv3, filters=3,
+        self.action_conv = tf.layers.conv2d(inputs=self.conv1, filters=3,
                                             kernel_size=[1, 1], padding="same",
                                             data_format="channels_last",
                                             activation=tf.nn.relu)
@@ -48,7 +45,7 @@ class PolicyValueNet():
                                          units=15 * 15,
                                          activation=tf.nn.log_softmax)
         # 4 Evaluation Networks
-        self.evaluation_conv = tf.layers.conv2d(inputs=self.conv3, filters=2,
+        self.evaluation_conv = tf.layers.conv2d(inputs=self.conv1, filters=2,
                                                 kernel_size=[1, 1],
                                                 padding="same",
                                                 data_format="channels_last",
@@ -105,6 +102,27 @@ class PolicyValueNet():
             print ("restore from :" , self.model_file)
         else:
             print ("no file to load")
+
+
+    def _build_residual_block(self, x, index):
+        res_x = x
+        res_name = "res" + str(index)
+        x = tf.layers.conv2d(inputs=self.conv1,
+                                    filters=256, kernel_size=[3, 3],use_bias=False,name=res_name+"_conv1",
+                                    padding="same", data_format="channels_last",
+                                    activation=None)
+        x = tf.layers.batch_normalization(x,name=res_name+"_batchnorm1")
+        x = tf.nn.relu(x,name=res_name+"_relu1")
+        
+        x = tf.layers.conv2d(inputs=x,
+                                    filters=256, kernel_size=[3, 3],use_bias=False,name=res_name+"_conv2",
+                                    padding="same", data_format="channels_last",
+                                    activation=None)
+        x = tf.layers.batch_normalization(x,name=res_name+"_batchnorm2")
+        x = res_x + x
+        x = tf.nn.relu(x,name=res_name+"_relu2")
+        return x
+
 
     def policy_value(self, state_batch):
         """

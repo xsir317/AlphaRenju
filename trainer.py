@@ -3,6 +3,7 @@
 import numpy as np
 from collections import deque
 import random
+import time
 
 class Trainer(object):
     def __init__(self,pv_net,bucket_size = 3000,batch_size=512):
@@ -37,6 +38,7 @@ class Trainer(object):
     def policy_update(self,game_data):
         """update the policy-value net"""
         #define params
+        enter_time = time.time()
         lr_multiplier = 1.0  # adaptively adjust the learning rate based on KL
         learn_rate = 2e-3 
         kl_targ = 0.02
@@ -70,18 +72,22 @@ class Trainer(object):
         explained_var_new = (1 -
                                 np.var(np.array(winner_batch) - new_v.flatten()) /
                                 np.var(np.array(winner_batch)))
+        time_cost = time.time() - enter_time
         print(("kl:{:.5f},"
                 "lr_multiplier:{:.3f},"
                 "loss:{},"
                 "entropy:{},"
                 "explained_var_old:{:.3f},"
-                "explained_var_new:{:.3f}"
+                "explained_var_new:{:.3f},"
+                "time cost:{:2f}"
                 ).format(kl,
                         lr_multiplier,
                         loss,
                         entropy,
                         explained_var_old,
-                        explained_var_new))
+                        explained_var_new,
+                        time_cost
+                ))
         return loss, entropy
 
     def feed(self,data):
@@ -91,5 +97,4 @@ class Trainer(object):
         if len(self.bucket) > 512:
             train_data = random.sample(self.bucket, 512)
             self.policy_update(train_data)
-        if (self.counter % 5 == 0):
             self.pv_net.save_model()

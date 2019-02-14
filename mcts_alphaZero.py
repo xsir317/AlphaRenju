@@ -151,7 +151,7 @@ class MCTS(object):
     def _debug(self):
         if self.debug_mode:
             for act, _sub_node in self._root._children.items():
-                print(RenjuBoard.number2pos(act),"\tselect value ",_sub_node.get_value(self._c_puct),"\tvisits ",_sub_node._n_visits,"\tQ ",_sub_node._Q)
+                print(RenjuBoard.number2pos(act),"\tsel ",_sub_node.get_value(self._c_puct),"\tv ",_sub_node._n_visits,"\tQ ",_sub_node._Q,"\tp ",_sub_node._P)
 
     def _playout(self, state):
         """Run a single playout from the root to the leaf, getting a value at
@@ -171,6 +171,7 @@ class MCTS(object):
         # for the current player.
         # Check for end of game.
         player = 1 - state.get_current_player() #应当是刚刚落子的那一方。
+        leaf_value = None
         if node._win :
             leaf_value = 1.0
             child_result = 'lose'
@@ -186,31 +187,35 @@ class MCTS(object):
                 else:
                     if (player == 1 and winner == RenjuBoard.BLACK_WIN) or (player == 0 and winner == RenjuBoard.WHITE_WIN):
                         leaf_value = 1.0
-                        child_result = 'lose'
                         node.mark_win()
+                        child_result = 'lose'
                     else:
                         leaf_value = -1.0
                         child_result = 'win'
             else:
-                win_move,only_defense = state.Find_win()
+                win_move,only_defense,defense_count = state.Find_win()
                 if win_move is not None:
                     leaf_value = -1.0
                     node.expand( MCTS._build_expand_prob(state.availables,win_move) )
                     #node.mark_lose() 这个在后面的update里做过了
                     node._children[win_move].mark_win()
                     child_result = 'win'
+                elif defense_count > 1:
+                    leaf_value = 1.0
+                    node.mark_win()
+                    child_result = 'lose'
                 elif only_defense is not None:
                     node.expand( MCTS._build_expand_prob(state.availables,only_defense) )
                     node._remain_count = 1 #这里就剩唯一防了。
-                    print ("冲4唯一防",only_defense,"root remain",self._root._remain_count)
                     for act, _sub_node in node._children.items():
                         if act != only_defense:
                             _sub_node.mark_lose()
                     node = node._children[only_defense]
                     state.do_move_by_number(only_defense)
 
-                action_probs, leaf_value = self._policy(state)
-                node.expand(action_probs)
+                if leaf_value is None:
+                    action_probs, leaf_value = self._policy(state)
+                    node.expand(action_probs)
                 #当前局面下，轮到对手下棋，如果对方有获胜策略，则当前方输了。 
 
         node.update_recursive(leaf_value,child_result) #TODO 这个值的符号到底对不对
@@ -236,20 +241,24 @@ class MCTS(object):
         #TODO root 输了的时候的特殊处理，不处理的话会不会所有点visit都是0
         #remain 剩一个的时候，playout 直接跳出了。遍历一下，选择那个剩下的。
         if conclusion:
-            act_visits = []
-            for act, node in self._root._children.items():
-                if self._root._win:
-                    act_visits.append((act,node._n_visits + 1))
-                elif self._root._lose:
-                    if node._win:
-                        act_visits.append((act,100))
-                    else:
-                        act_visits.append((act,0))
-                elif self._root._remain_count == 1:
-                    if node._lose:
-                        act_visits.append((act,0))
-                    else:
+            if len(self._root._children) == 0:
+                act_visits = [(act,1)
+                    for act in state.availables]
+            else:
+                act_visits = []
+                for act, node in self._root._children.items():
+                    if self._root._win:
                         act_visits.append((act,node._n_visits + 1))
+                    elif self._root._lose:
+                        if node._win:
+                            act_visits.append((act,100))
+                        else:
+                            act_visits.append((act,0))
+                    elif self._root._remain_count == 1:
+                        if node._lose:
+                            act_visits.append((act,0))
+                        else:
+                            act_visits.append((act,node._n_visits + 1))
         else:
             # calc the move probabilities based on visit counts at the root node
             act_visits = [(act, node._n_visits)
@@ -271,7 +280,7 @@ class MCTS(object):
     @staticmethod
     def _build_expand_prob(legal_positions,act):
         probs = np.zeros(len(legal_positions))
-        probs[act] = 1
+        probs[probs == act] = 1
         return zip(legal_positions, probs)
 
     def __str__(self):

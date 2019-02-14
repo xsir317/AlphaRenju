@@ -276,13 +276,15 @@ class RenjuBoard(object):
         attacker = (RenjuBoard.BLACK_STONE if self.get_current_player() else RenjuBoard.WHITE_STONE)
         defender = RenjuBoard.get_oppo(attacker)
         oppo_win = None
+        oppo_win_count = 0
         for i in range(1,16):
                 for j in range(1,16):
                     if self.isFive([i,j],attacker):
-                        return RenjuBoard.coordinate2number([i,j]),None
+                        return RenjuBoard.coordinate2number([i,j]),None,0
                     if self.isFive([i,j],defender):
                         oppo_win = RenjuBoard.coordinate2number([i,j])
-        return None,oppo_win
+                        oppo_win_count += 1
+        return None,oppo_win,oppo_win_count
 
     
     def VCF(self):

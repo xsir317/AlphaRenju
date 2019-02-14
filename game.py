@@ -32,7 +32,6 @@ class Game(object):
             #if len(states) >= 5:
             end, winner = self.board.game_end()
             if end:
-                winner = RenjuBoard.WHITE_WIN
                 total_moves = len(states)
 
                 if winner == RenjuBoard.DRAW:

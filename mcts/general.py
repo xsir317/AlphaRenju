@@ -100,6 +100,8 @@ class MCTS():
         best_act = -1
 
         # pick the action with the highest upper confidence bound
+        #return max(self._children.items(),
+        #           key=lambda act_node: act_node[1].get_value(c_puct))
         for a in range(self.game.getActionSize()):
             if valids[a]:
                 if (s,a) in self.Qsa:
@@ -127,3 +129,4 @@ class MCTS():
 
         self.Ns[s] += 1
         return -v
+ 

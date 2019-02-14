@@ -1,5 +1,6 @@
 from game import Game
-from policy_value_net import PolicyValueNet
+#from policy_value_net import PolicyValueNet
+from policy_value_net_residual import PolicyValueNet
 from players import MasterPlayer
 from trainer import Trainer
 

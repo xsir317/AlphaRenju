@@ -34,6 +34,8 @@ class MCTSPlayer(object):
     def get_action(self, board, temp=1e-3):
         #sensible_moves = board.availables
         # the pi vector returned by MCTS as in the alphaGo Zero paper
+        if self._is_selfplay:
+            temp = 0.1
         move_probs = np.zeros(15*15)
         acts, probs = self.mcts.get_move_probs(board, temp)
         move_probs[list(acts)] = probs
@@ -42,11 +44,11 @@ class MCTSPlayer(object):
         if self._is_selfplay:
             move = np.random.choice(
                 acts,
-                p=0.75*probs + 0.25*np.random.dirichlet(0.3*np.ones(len(probs)))
+                p=0.9*probs + 0.1*np.random.dirichlet(0.3*np.ones(len(probs)))
             )
             #debug
-            print ("choose ",move ,"by prob ",move_probs[move])
-            print ("best move is ", best_move, best_chance)
+            print ("choose ",RenjuBoard.number2pos(move) ,"by prob ",move_probs[move])
+            print ("best move is ", RenjuBoard.number2pos(best_move), best_chance)
             # update the root node and reuse the search tree
             self.mcts.update_with_move(move)
         else:
@@ -95,9 +97,9 @@ class MasterPlayer(object):
             winner_map = [ 0 for _i in range(total_moves)]
             print("draw")
         elif winner == 0: #white win
-            winner_map = [ _i%2 for _i in range(total_moves)]
+            winner_map = [ (_i%2) * 2 - 1 for _i in range(total_moves)]
             print("WHITE_WIN")
         else:
-            winner_map = [ (_i+1)%2 for _i in range(total_moves)]
+            winner_map = [ ((_i+1)%2)*2 - 1  for _i in range(total_moves)]
             print("BLACK_WIN")
         return zip(states, mcts_probs,winner_map)
