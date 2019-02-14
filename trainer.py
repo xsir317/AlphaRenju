@@ -40,7 +40,7 @@ class Trainer(object):
         """update the policy-value net"""
         #define params
         lr_multiplier = 1.0  # adaptively adjust the learning rate based on KL
-        learn_rate = 2e-3 
+        learn_rate = 2e-4 
         kl_targ = 0.02
 
         state_batch = [data[0] for data in game_data]
