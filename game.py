@@ -21,16 +21,22 @@ class Game(object):
                 player = self.player1
                 debug_stone = '●'
             move, move_probs = player.get_action(self.board)
-            # store the data
-            states.append(self.board.current_state())
-            mcts_probs.append(move_probs)
-            #print(move_probs)
-            # perform a move
-            self.board.do_move_by_number(move)
-            print ("player: ",debug_stone)
-            self.board._debug_board()
-            #if len(states) >= 5:
-            end, winner = self.board.game_end()
+            #加入认输逻辑
+            if move is None:
+                end = True
+                winner = (RenjuBoard.WHITE_WIN if self.board.get_current_player() else RenjuBoard.BLACK_WIN) #认输了，对手赢了
+                print ("player: ",debug_stone," resigns.")
+            else:
+                # store the data
+                states.append(self.board.current_state())
+                mcts_probs.append(move_probs)
+                #print(move_probs)
+                # perform a move
+                self.board.do_move_by_number(move)
+                print ("player: ",debug_stone)
+                self.board._debug_board()
+                #if len(states) >= 5:
+                end, winner = self.board.game_end()
             if end:
                 total_moves = len(states)
 
