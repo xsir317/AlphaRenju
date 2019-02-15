@@ -6,7 +6,7 @@ from policy_value_net_residual import PolicyValueNet
 
 pv_net = PolicyValueNet('./master')
 
-consultant = MCTSPlayer(pv_net.policy_value_fn,n_playout=10000,debug=True)
+consultant = MCTSPlayer(pv_net.policy_value_fn,c_puct=10,n_playout=1000,debug=True)
 board = RenjuBoard()
 
 while True:

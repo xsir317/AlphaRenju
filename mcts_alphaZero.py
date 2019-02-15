@@ -53,7 +53,7 @@ class TreeNode(object):
         return max(self._children.items(),
                    key=lambda act_node: act_node[1].get_value(c_puct))
 
-    def update(self, leaf_value):
+    def update(self, leaf_value,child_win = False,child_lose = False):
         """Like a call to update(), but applied recursively for all ancestors.
         """
         # If it is not root, this node's parent should be updated first.
@@ -62,9 +62,15 @@ class TreeNode(object):
         # Update Q, a running average of values for all visits.
         self._Q += 1.0*(leaf_value - self._Q) / self._n_visits
         #如果_child 全lose 则当前update为win。仅当child 更新为lose 的时候，触发父节点的win检查。
+        if child_win:
+            self.mark_lose()
+        if child_lose:
+            self._remain_count -= 1
+            if self._remain_count == 0:
+                self.mark_win()
         #如果任何一个子节点 win了，则当前节点update为lose
         if self._parent:
-            self._parent.update(-leaf_value)
+            self._parent.update(-leaf_value,self._win,self._lose)
 
     def get_value(self, c_puct):
         """Calculate and return the value for this node.
@@ -143,10 +149,10 @@ class MCTS(object):
         确认其胜负，不确定的就采纳神经网络的结论值；
         """
         node = self._root
-        while(1):
+        while True:
             if node.is_leaf():
                 break
-            # Greedily select next move.
+            # 爬树，如果爬树了，那么root至少不是秃的
             action, node = node.select(self._c_puct)
             state.do_move_by_number(action)
 
@@ -168,7 +174,7 @@ class MCTS(object):
                 if win_move is not None:
                     node.mark_lose()
                 #elif 有2个以上冲四点或者活四 or  防点是禁手
-                elif (defense_count > 1) or (state.get_current_player() == 1 and state.isForbidden(RenjuBoard.num2coordinate(only_defense))):
+                elif (defense_count > 1) or (only_defense and state.get_current_player() == 1 and state.isForbidden(RenjuBoard.num2coordinate(only_defense))):
                     node.mark_win()
                 elif only_defense is not None:
                     node.expand( MCTS._build_expand_prob(state.availables,only_defense) )
@@ -191,8 +197,12 @@ class MCTS(object):
         node.update(leaf_value)
         root_result = self._root._win or self._root._lose or self._root._remain_count == 1
         if root_result and len(self._root._children) == 0:
-            #TODO 对于有结论而没有expand 的根节点进行特殊处理。
-            pass
+            #TODO 对于有结论而没有expand 的根节点进行特殊处理。 因为再不处理， 这么返回的话， playout提前结束，就崩了。
+            #如果根是秃的，那刚刚 state.Find_win() 肯定是对根做的，直接拿来用！ state也没动
+            if win_move:
+                self._root.expand( MCTS._build_expand_prob(state.availables,win_move) )
+            else : 
+                self._root.expand( MCTS._build_expand_prob(state.availables,only_defense) )
 
         return root_result
 
