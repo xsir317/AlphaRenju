@@ -53,34 +53,18 @@ class TreeNode(object):
         return max(self._children.items(),
                    key=lambda act_node: act_node[1].get_value(c_puct))
 
-    def update(self, leaf_value,child_result = None):
-        """Update node values from leaf evaluation.
-        leaf_value: the value of subtree evaluation from the current player's
-            perspective.
+    def update(self, leaf_value):
+        """Like a call to update(), but applied recursively for all ancestors.
         """
-        # Count visit.
+        # If it is not root, this node's parent should be updated first.
+        
         self._n_visits += 1
         # Update Q, a running average of values for all visits.
         self._Q += 1.0*(leaf_value - self._Q) / self._n_visits
         #如果_child 全lose 则当前update为win。仅当child 更新为lose 的时候，触发父节点的win检查。
-        if child_result == 'lose':
-            self._remain_count -= 1
-            if self._remain_count == 0:
-                self.mark_win()
-                return 'win'
         #如果任何一个子节点 win了，则当前节点update为lose
-        elif child_result == 'win':
-            self.mark_lose()
-            return 'lose'
-        return None
-
-    def update_recursive(self, leaf_value,child_result = None):
-        """Like a call to update(), but applied recursively for all ancestors.
-        """
-        # If it is not root, this node's parent should be updated first.
-        result = self.update(leaf_value,child_result)
         if self._parent:
-            self._parent.update_recursive(-leaf_value,result)
+            self._parent.update(-leaf_value)
 
     def get_value(self, c_puct):
         """Calculate and return the value for this node.
@@ -154,9 +138,9 @@ class MCTS(object):
                 print(RenjuBoard.number2pos(act),"\tsel ",_sub_node.get_value(self._c_puct),"\tv ",_sub_node._n_visits,"\tQ ",_sub_node._Q,"\tp ",_sub_node._P)
 
     def _playout(self, state):
-        """Run a single playout from the root to the leaf, getting a value at
-        the leaf and propagating it back through its parents.
-        State is modified in-place, so a copy must be provided.
+        """
+        从根节点开始跑一个playout，找到暂时没有结论的叶子节点
+        确认其胜负，不确定的就采纳神经网络的结论值；
         """
         node = self._root
         while(1):
@@ -166,63 +150,50 @@ class MCTS(object):
             action, node = node.select(self._c_puct)
             state.do_move_by_number(action)
 
-        #TODO 需要优化逻辑。
         player = 1 - state.get_current_player() #应当是刚刚落子的那一方。
         leaf_value = None
-        if node._win :
-            leaf_value = 1.0
-            child_result = 'lose'
-        elif node._lose :
-            leaf_value = -1.0
-            child_result = 'win'
-        else:
-            child_result = None
+
+        if not (node._win or node._lose):
             end, winner = state.game_end()
             if end:
                 if winner == RenjuBoard.DRAW:  # tie
                     leaf_value = 0.0
                 else:
                     if (player == 1 and winner == RenjuBoard.BLACK_WIN) or (player == 0 and winner == RenjuBoard.WHITE_WIN):
-                        leaf_value = 1.0
                         node.mark_win()
-                        child_result = 'lose'
                     else:
-                        leaf_value = -1.0
-                        child_result = 'win'
+                        node.mark_lose()
             else:
                 win_move,only_defense,defense_count = state.Find_win()
                 if win_move is not None:
-                    leaf_value = -1.0
-                    node.expand( MCTS._build_expand_prob(state.availables,win_move) )
-                    #node.mark_lose() 这个在后面的update里做过了
-                    node._children[win_move].mark_win()
-                    child_result = 'win'
-                elif defense_count > 1:
-                    leaf_value = 1.0
+                    node.mark_lose()
+                #elif 有2个以上冲四点或者活四 or  防点是禁手
+                elif (defense_count > 1) or (state.get_current_player() == 1 and state.isForbidden(RenjuBoard.num2coordinate(only_defense))):
                     node.mark_win()
-                    child_result = 'lose'
                 elif only_defense is not None:
-                    #冲四点是禁手，那么child （黑棋）就绝望了， 白棋抓到了禁手 leaf_value = 1.0
-                    if state.get_current_player() == 1 and state.isForbidden(RenjuBoard.num2coordinate(only_defense)):
-                        leaf_value = 1.0
-                        node.mark_win()
-                        child_result = 'lose'
-                    else:
-                        node.expand( MCTS._build_expand_prob(state.availables,only_defense) )
-                        node._remain_count = 1 #这里就剩唯一防了。
-                        for act, _sub_node in node._children.items():
-                            if act != only_defense:
-                                _sub_node.mark_lose()
-                        node = node._children[only_defense]
-                        state.do_move_by_number(only_defense)
+                    node.expand( MCTS._build_expand_prob(state.availables,only_defense) )
+                    node._remain_count = 1 #这里就剩唯一防了。
+                    for act, _sub_node in node._children.items():
+                        if act != only_defense:
+                            _sub_node.mark_lose()
+                    node = node._children[only_defense] #这里可以保证这个only_defense的落子不会触发胜负
+                    state.do_move_by_number(only_defense)
 
-                if leaf_value is None:
-                    action_probs, leaf_value = self._policy(state)
-                    node.expand(action_probs)
+                action_probs, leaf_value = self._policy(state)
+                node.expand(action_probs)
                 #当前局面下，轮到对手下棋，如果对方有获胜策略，则当前方输了。 
 
-        node.update_recursive(leaf_value,child_result) #TODO 这个值的符号到底对不对
+        if node._win :
+            leaf_value = 1.0
+        elif node._lose :
+            leaf_value = -1.0
+
+        node.update(leaf_value)
         root_result = self._root._win or self._root._lose or self._root._remain_count == 1
+        if root_result and len(self._root._children) == 0:
+            #TODO 对于有结论而没有expand 的根节点进行特殊处理。
+            pass
+
         return root_result
 
     def get_move_probs(self, state, temp=1e-3):
@@ -244,6 +215,8 @@ class MCTS(object):
         #TODO root 输了的时候的特殊处理，不处理的话会不会所有点visit都是0
         #remain 剩一个的时候，playout 直接跳出了。遍历一下，选择那个剩下的。
         if conclusion:
+            if self._root._win: #根已经明确获胜了，就认输
+                return None,None
             if len(self._root._children) == 0:
                 act_visits = [(act,1)
                     for act in state.availables]
@@ -283,8 +256,28 @@ class MCTS(object):
     @staticmethod
     def _build_expand_prob(legal_positions,act):
         probs = np.zeros(len(legal_positions))
-        probs[probs == act] = 1
+        probs[legal_positions.index(act)] = 1
         return zip(legal_positions, probs)
 
     def __str__(self):
         return "MCTS"
+
+        #当前节点要达到的标记状态：
+            #如果当前盘面已经输了（盘面有禁手或者有五连）则无需expand，否则都要expand
+            #有明确结论的，标记明确结论。 当前盘面必败的，标记其必胜走法
+        #如果没有标记胜负，先直接判断 game_end， 如果 game_end 则做标记
+        #此处很多标胜负都是不会向上触发的，要注意最终能有效向上传播的标记胜负只有当前node的胜负。
+        #如果没有 game_end ，则 state.Find_win 
+            #如果找到连五点，则对方获胜，标负（手动expand）；
+            #Find_win如果有找到必防点，就先expand，必防点之外的子节点全标负
+            #如果找到多于1个必须防的点（当前局面对方已经无法防守了） 则必防点也标负
+            #如果 必防点是禁手点，则标胜，子节点expand为全负
+
+        #先判断 game_end 。 game_end出明确结论 是不需要expand的。 落子禁手和5连
+        #game_end 没结束的：【当前是指已经落子过后，下一手是对方走。局面】
+            # 看 state.Find_win()。 冲4不挡会被扫出来（连5点标胜，当前局面标负）、我方有多于1个连5点也会被扫出来
+            # 有连5点，当前局面标负的，进行手动expand 
+            # 我方存在冲四点的， 针对 防点进行expand
+            # 我方存在多个冲四点的 或者 冲四点抓禁的，给出正确的返回结论（当前局面标胜）
+            
+        #TODO 需要优化逻辑。

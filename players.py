@@ -8,6 +8,9 @@ class Human(object):
     
     def get_action(self, board):
         location = input("Your move: (11 to ff)")
+        #增加投降功能：
+        if location == 'RESIGN':
+            return None,None
         move_number = RenjuBoard.pos2number(location.strip())
         if move_number not in board.availables:
             print("invalid move")
