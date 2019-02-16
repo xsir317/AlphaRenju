@@ -38,7 +38,7 @@ class MCTSPlayer(object):
         #sensible_moves = board.availables
         # the pi vector returned by MCTS as in the alphaGo Zero paper
         if self._is_selfplay:
-            temp = 0.1
+            temp = 1.5
         move_probs = np.zeros(15*15)
         acts, probs = self.mcts.get_move_probs(board, temp)
         if acts is None: #ai认输
@@ -49,7 +49,8 @@ class MCTSPlayer(object):
         if self._is_selfplay:
             move = np.random.choice(
                 acts,
-                p=0.9*probs + 0.1*np.random.dirichlet(0.3*np.ones(len(probs)))
+                p = probs
+                #p=0.9*probs + 0.1*np.random.dirichlet(0.3*np.ones(len(probs)))
             )
             #debug
             print ("choose ",RenjuBoard.number2pos(move) ,"by prob ",move_probs[move])

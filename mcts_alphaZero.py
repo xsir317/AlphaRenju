@@ -141,7 +141,8 @@ class MCTS(object):
     def _debug(self):
         if self.debug_mode:
             for act, _sub_node in self._root._children.items():
-                print(RenjuBoard.number2pos(act),"\tsel ",_sub_node.get_value(self._c_puct),"\tv ",_sub_node._n_visits,"\tQ ",_sub_node._Q,"\tp ",_sub_node._P)
+                if _sub_node._n_visits > 0:
+                    print(RenjuBoard.number2pos(act),"\tsel ",_sub_node.get_value(self._c_puct),"\tv ",_sub_node._n_visits,"\tQ ",_sub_node._Q,"\tp ",_sub_node._P)
 
     def _playout(self, state):
         """
@@ -275,23 +276,3 @@ class MCTS(object):
 
     def __str__(self):
         return "MCTS"
-
-        #当前节点要达到的标记状态：
-            #如果当前盘面已经输了（盘面有禁手或者有五连）则无需expand，否则都要expand
-            #有明确结论的，标记明确结论。 当前盘面必败的，标记其必胜走法
-        #如果没有标记胜负，先直接判断 game_end， 如果 game_end 则做标记
-        #此处很多标胜负都是不会向上触发的，要注意最终能有效向上传播的标记胜负只有当前node的胜负。
-        #如果没有 game_end ，则 state.Find_win 
-            #如果找到连五点，则对方获胜，标负（手动expand）；
-            #Find_win如果有找到必防点，就先expand，必防点之外的子节点全标负
-            #如果找到多于1个必须防的点（当前局面对方已经无法防守了） 则必防点也标负
-            #如果 必防点是禁手点，则标胜，子节点expand为全负
-
-        #先判断 game_end 。 game_end出明确结论 是不需要expand的。 落子禁手和5连
-        #game_end 没结束的：【当前是指已经落子过后，下一手是对方走。局面】
-            # 看 state.Find_win()。 冲4不挡会被扫出来（连5点标胜，当前局面标负）、我方有多于1个连5点也会被扫出来
-            # 有连5点，当前局面标负的，进行手动expand 
-            # 我方存在冲四点的， 针对 防点进行expand
-            # 我方存在多个冲四点的 或者 冲四点抓禁的，给出正确的返回结论（当前局面标胜）
-            
-        #TODO 需要优化逻辑。
