@@ -199,6 +199,10 @@ class MCTS(object):
         if root_result and len(self._root._children) == 0:
             #TODO 对于有结论而没有expand 的根节点进行特殊处理。 因为再不处理， 这么返回的话， playout提前结束，就崩了。
             #如果根是秃的，那刚刚 state.Find_win() 肯定是对根做的，直接拿来用！ state也没动
+            try:
+                win_move
+            except NameError:
+                win_move,only_defense,defense_count = state.Find_win()
             if win_move:
                 self._root.expand( MCTS._build_expand_prob(state.availables,win_move) )
             else : 

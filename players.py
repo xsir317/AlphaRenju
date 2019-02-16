@@ -41,6 +41,8 @@ class MCTSPlayer(object):
             temp = 0.1
         move_probs = np.zeros(15*15)
         acts, probs = self.mcts.get_move_probs(board, temp)
+        if acts is None: #ai认输
+            return None,None
         move_probs[list(acts)] = probs
         best_chance = np.max(move_probs)
         best_move = np.where(move_probs == best_chance)[0][0]
