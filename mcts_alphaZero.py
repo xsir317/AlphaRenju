@@ -262,6 +262,7 @@ class MCTS(object):
         about the subtree.
         """
         if len(self._root._children) == 0:
+            self.reset()
             self._root.expand( MCTS._build_expand_prob(board.availables,None) )
         if last_move in self._root._children:
             self._root = self._root._children[last_move]
