@@ -6,7 +6,7 @@ import tensorflow as tf
 class PolicyValueNet():
     def __init__(self, model_file=None):
         self.model_file = model_file
-        self.loss_weight = [1.0,0.1] # policy weight and value weight
+        self.loss_weight = [1.0,0.8] # policy weight and value weight
 
         # 1. Input:
         self.input_states = tf.placeholder(

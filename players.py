@@ -19,6 +19,9 @@ class Human(object):
         prob[move_number] = 1.0
         return move_number,prob
 
+    def notice(self,move):
+        pass
+
     def __str__(self):
         return "Human"
 
@@ -32,7 +35,10 @@ class MCTSPlayer(object):
         self._is_selfplay = is_selfplay
 
     def reset_player(self):
-        self.mcts.update_with_move(-1)
+        self.mcts.reset()
+
+    def notice(self,move):
+        self.mcts.update_with_move(move)
 
     def get_action(self, board, temp=1e-3):
         #sensible_moves = board.availables
@@ -56,17 +62,14 @@ class MCTSPlayer(object):
             print ("choose ",RenjuBoard.number2pos(move) ,"by prob ",move_probs[move])
             print ("best move is ", RenjuBoard.number2pos(best_move), best_chance)
             # update the root node and reuse the search tree
-            self.mcts.update_with_move(move)
         else:
             # with the default temp=1e-3, it is almost equivalent
             # to choosing the move with the highest prob
             #move = np.random.choice(acts, p=probs)
             move = best_move
-            #TODO 按照prob排序取最好的，不要random？
             # reset the root node
-            self.mcts.update_with_move(-1)
-#                location = board.move_to_location(move)
-#                print("AI move: %d,%d\n" % (location[0], location[1]))
+            #self.mcts.update_with_move(-1)
+        self.mcts.update_with_move(move)
         return move, move_probs
 
 
@@ -109,3 +112,23 @@ class MasterPlayer(object):
             winner_map = [ ((_i+1)%2)*2 - 1  for _i in range(total_moves)]
             print("BLACK_WIN")
         return zip(states, mcts_probs,winner_map)
+
+
+
+class PolicyPlayer(object):
+    """AI player based on MCTS"""
+
+    def __init__(self, policy_value_function):
+        self.policy_fn = policy_value_function
+
+    def get_action(self, board):
+        move_probs = np.zeros(15*15)
+        action_probs, leaf_value = self.policy_fn(board)
+        for action, prob in action_probs:
+            move_probs[action] = prob
+        best_chance = np.max(move_probs)
+        best_move = np.where(move_probs == best_chance)[0][0]
+        return best_move, move_probs
+
+    def notice(self,move):
+        pass

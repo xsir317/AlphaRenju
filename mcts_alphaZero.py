@@ -265,8 +265,9 @@ class MCTS(object):
         if last_move in self._root._children:
             self._root = self._root._children[last_move]
             self._root._parent = None
-        else:
-            self._root = TreeNode(None, 1.0)
+
+    def reset(self):
+        self._root = TreeNode(None, 1.0)
 
     @staticmethod
     def _build_expand_prob(legal_positions,act):

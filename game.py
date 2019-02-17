@@ -16,11 +16,18 @@ class Game(object):
         states, mcts_probs = [], []
         while True:
             player = self.player2
+            opponent = self.player1
             debug_stone = '◯'
             if self.board.get_current_player():
                 player = self.player1
+                opponent = self.player2
                 debug_stone = '●'
             move, move_probs = player.get_action(self.board)
+            #TODO  注意，在游戏进行时，Game类负责将当前棋局传递给当前棋手。
+            # 棋手思考并得出结论，返回给Game；
+            # Game负责将棋子落在棋盘上，然后应该是发一个全局的通知。 （发布：订阅模型）
+            # 目前并没有这样做，只是通知落子的对方而已。
+            opponent.notice(move) #Game在落子之后，要通知对手。
             #加入认输逻辑
             if move is None:
                 end = True

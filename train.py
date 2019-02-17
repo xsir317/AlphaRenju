@@ -21,4 +21,4 @@ trainer = Trainer(policy_value_net)
 while True:
     winner, game_data = game.do_play()
     player.reset_player()
-    #trainer.feed(game_data)
+    trainer.feed(game_data)
