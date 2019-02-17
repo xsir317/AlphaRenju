@@ -27,7 +27,7 @@ class Game(object):
             # 棋手思考并得出结论，返回给Game；
             # Game负责将棋子落在棋盘上，然后应该是发一个全局的通知。 （发布：订阅模型）
             # 目前并没有这样做，只是通知落子的对方而已。
-            opponent.notice(move) #Game在落子之后，要通知对手。
+            opponent.notice(self.board,move) #Game在落子之后，要通知对手。
             #加入认输逻辑
             if move is None:
                 end = True
