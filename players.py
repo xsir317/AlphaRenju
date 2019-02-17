@@ -19,7 +19,7 @@ class Human(object):
         prob[move_number] = 1.0
         return move_number,prob
 
-    def notice(self,move):
+    def notice(self,board,move):
         pass
 
     def __str__(self):
@@ -37,8 +37,9 @@ class MCTSPlayer(object):
     def reset_player(self):
         self.mcts.reset()
 
-    def notice(self,move):
-        self.mcts.update_with_move(move)
+    def notice(self,board,move):
+        #如果这里mcts的根是秃的，而且又必须要move，就直接重置之后expand 然后move
+        self.mcts.update_with_move(board,move)
 
     def get_action(self, board, temp=1e-3):
         #sensible_moves = board.availables
@@ -69,7 +70,7 @@ class MCTSPlayer(object):
             move = best_move
             # reset the root node
             #self.mcts.update_with_move(-1)
-        self.mcts.update_with_move(move)
+        self.mcts.update_with_move(board,move)
         return move, move_probs
 
 
@@ -130,5 +131,5 @@ class PolicyPlayer(object):
         best_move = np.where(move_probs == best_chance)[0][0]
         return best_move, move_probs
 
-    def notice(self,move):
+    def notice(self,board,move):
         pass

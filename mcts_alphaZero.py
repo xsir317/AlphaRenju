@@ -227,7 +227,6 @@ class MCTS(object):
                 print ("got conclusion on root")
                 break
 
-        #TODO root 输了的时候的特殊处理，不处理的话会不会所有点visit都是0
         #remain 剩一个的时候，playout 直接跳出了。遍历一下，选择那个剩下的。
         if conclusion:
             if self._root._win: #根已经明确获胜了，就认输
@@ -258,10 +257,12 @@ class MCTS(object):
         act_probs = softmax(1.0/temp * np.log(np.array(visits) + 1e-10))
         return acts, act_probs
 
-    def update_with_move(self, last_move):
+    def update_with_move(self, board,last_move):
         """Step forward in the tree, keeping everything we already know
         about the subtree.
         """
+        if len(self._root._children) == 0:
+            self._root.expand( MCTS._build_expand_prob(board.availables,None) )
         if last_move in self._root._children:
             self._root = self._root._children[last_move]
             self._root._parent = None
@@ -272,7 +273,10 @@ class MCTS(object):
     @staticmethod
     def _build_expand_prob(legal_positions,act):
         probs = np.zeros(len(legal_positions))
-        probs[legal_positions.index(act)] = 1
+        try:
+            probs[legal_positions.index(act)] = 1
+        except ValueError:
+            probs[:] = 1/len(legal_positions)
         return zip(legal_positions, probs)
 
     def __str__(self):
