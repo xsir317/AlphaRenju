@@ -177,17 +177,18 @@ class MCTS(object):
                 #elif 有2个以上冲四点或者活四 or  防点是禁手
                 elif (defense_count > 1) or (only_defense and state.get_current_player() == 1 and state.isForbidden(RenjuBoard.num2coordinate(only_defense))):
                     node.mark_win()
-                elif only_defense is not None:
-                    node.expand( MCTS._build_expand_prob(state.availables,only_defense) )
-                    node._remain_count = 1 #这里就剩唯一防了。
-                    for act, _sub_node in node._children.items():
-                        if act != only_defense:
-                            _sub_node.mark_lose()
-                    node = node._children[only_defense] #这里可以保证这个only_defense的落子不会触发胜负
-                    state.do_move_by_number(only_defense)
+                else:#走到这里是没结论
+                    if only_defense is not None: #如果有冲四就按照冲四防一下，往下走一手
+                        node.expand( MCTS._build_expand_prob(state.availables,only_defense) )
+                        node._remain_count = 1 #这里就剩唯一防了。
+                        for act, _sub_node in node._children.items():
+                            if act != only_defense:
+                                _sub_node.mark_lose()
+                        node = node._children[only_defense] #这里可以保证这个only_defense的落子不会触发胜负
+                        state.do_move_by_number(only_defense)
 
-                action_probs, leaf_value = self._policy(state)
-                node.expand(action_probs)
+                    action_probs, leaf_value = self._policy(state)
+                    node.expand(action_probs)
                 #当前局面下，轮到对手下棋，如果对方有获胜策略，则当前方输了。 
 
         if node._win :
@@ -206,6 +207,7 @@ class MCTS(object):
                 win_move,only_defense,defense_count = state.Find_win()
             if win_move:
                 self._root.expand( MCTS._build_expand_prob(state.availables,win_move) )
+                self._root._children[win_move].mark_win()
             else : 
                 self._root.expand( MCTS._build_expand_prob(state.availables,only_defense) )
 
@@ -231,15 +233,10 @@ class MCTS(object):
         if conclusion:
             if self._root._win: #根已经明确获胜了，就认输
                 return None,None
-            if len(self._root._children) == 0:
-                act_visits = [(act,1)
-                    for act in state.availables]
             else:
                 act_visits = []
                 for act, node in self._root._children.items():
-                    if self._root._win:
-                        act_visits.append((act,node._n_visits + 1))
-                    elif self._root._lose:
+                    if self._root._lose:
                         if node._win:
                             act_visits.append((act,100))
                         else:

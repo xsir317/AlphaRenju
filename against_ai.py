@@ -1,5 +1,6 @@
 from game import Game
-from policy_value_net import PolicyValueNet
+#from policy_value_net import PolicyValueNet
+from policy_value_net_residual import PolicyValueNet
 from players import MCTSPlayer,Human
 from trainer import Trainer
 
@@ -9,7 +10,7 @@ policy_value_net = PolicyValueNet(model_file=init_model)
 trainer = Trainer(policy_value_net)
 
 #new MCTS
-player_ai = MCTSPlayer(policy_value_net.policy_value_fn,5,1000,is_selfplay = 0,debug=True)
+player_ai = MCTSPlayer(policy_value_net.policy_value_fn,5,100,is_selfplay = 0,debug=True)
 player_me = Human()
 game = Game(player_ai,player_me)
 
