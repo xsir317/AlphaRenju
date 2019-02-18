@@ -13,6 +13,9 @@ policy_value_net = PolicyValueNet(model_file=init_model)
 trainer = Trainer(policy_value_net)
 master = MasterPlayer()
 
-while True:
-    game_data = master.get_train_game()
-    trainer.feed(game_data)
+try:
+    while True:
+        game_data = master.get_train_game()
+        trainer.feed(game_data)
+except KeyboardInterrupt:
+    print ("exit")
