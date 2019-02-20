@@ -40,7 +40,7 @@ class Trainer(object):
         """update the policy-value net"""
         #define params
         lr_multiplier = 1.0  # adaptively adjust the learning rate based on KL
-        learn_rate = 2e-3
+        learn_rate = 1e-4
         kl_targ = 0.02
 
         state_batch = [data[0] for data in game_data]
@@ -60,11 +60,11 @@ class Trainer(object):
             )
             if kl > kl_targ * 4:  # early stopping if D_KL diverges badly
                 break
-        # adaptively adjust the learning rate
-        if kl > kl_targ * 2 and lr_multiplier > 0.1:
-            lr_multiplier /= 1.5
-        elif kl < kl_targ / 2 and lr_multiplier < 10:
-            lr_multiplier *= 1.5
+            # adaptively adjust the learning rate
+            if kl > kl_targ * 2 and lr_multiplier > 0.1:
+                lr_multiplier /= 1.5
+            elif kl < kl_targ / 2 and lr_multiplier < 10:
+                lr_multiplier *= 1.5
 
         explained_var_old = (1 -
                                 np.var(np.array(winner_batch) - old_v.flatten()) /
