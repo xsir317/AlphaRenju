@@ -83,10 +83,13 @@ class MasterPlayer(object):
         self.board = RenjuBoard()
 
     def get_train_game(self):
+        #注意，人类棋谱由于RIF规则的原因，前5手丢弃。
         game_string = self.file_reader.readline()
         print (game_string)
         self.board.reset()
         game_string = game_string.strip()
+        if len(game_string) < 10:
+            return None
         states, mcts_probs = [], []
         #获得game 的记录和结果， 做一堆和self play 差不多的数据返回回去
         game_result = game_string.split(",")
@@ -113,6 +116,10 @@ class MasterPlayer(object):
         else:
             winner_map = [ ((_i+1)%2)*2 - 1  for _i in range(total_moves)]
             print("BLACK_WIN")
+        #去掉前5手
+        states = states[5:]
+        mcts_probs = mcts_probs[5:]
+        winner_map = winner_map[5:]
         return zip(states, mcts_probs,winner_map)
 
 

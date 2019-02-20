@@ -107,7 +107,7 @@ class PolicyValueNet():
     def _build_residual_block(self, x, index):
         res_x = x
         res_name = "res" + str(index)
-        x = tf.layers.conv2d(inputs=self.conv1,
+        x = tf.layers.conv2d(inputs=x,
                                     filters=256, kernel_size=[3, 3],use_bias=False,name=res_name+"_conv1",
                                     padding="same", data_format="channels_last",
                                     activation=None)

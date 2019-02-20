@@ -16,6 +16,9 @@ master = MasterPlayer()
 try:
     while True:
         game_data = master.get_train_game()
+        if game_data == None:
+            break
+        
         trainer.feed(game_data)
 except KeyboardInterrupt:
     print ("exit")
