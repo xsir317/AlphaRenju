@@ -81,7 +81,8 @@ class PolicyValueNet():
 
         # Define the optimizer we use for training
         self.learning_rate = tf.placeholder(tf.float32)
-        self.optimizer = tf.train.AdamOptimizer(
+        #self.optimizer = tf.train.AdamOptimizer(
+        self.optimizer = tf.train.GradientDescentOptimizer(
                 learning_rate=self.learning_rate).minimize(self.loss)
 
         # Make a session
