@@ -1,7 +1,6 @@
 import numpy as np
 from mcts_alphaZero import MCTS
-#from renju import RenjuBoard
-from renjuv2 import RenjuBoard
+from renju import RenjuBoard
 
 class Human(object):
     def __init__(self):
@@ -40,6 +39,7 @@ class MCTSPlayer(object):
 
     def notice(self,board,move):
         #如果这里mcts的根是秃的，而且又必须要move，就直接重置
+        print ("been told move ",move)
         self.mcts.update_with_move(board,move)
 
     def get_action(self, board, temp=1e-3):
