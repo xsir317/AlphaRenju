@@ -1,5 +1,7 @@
-from renju import RenjuBoard
+#from renju import RenjuBoard
+from renjuv2 import RenjuBoard
 import numpy as np
+import time
 
 #一个游戏，要有一个棋盘，2个玩家，胜负结果，和返回数据。
 
@@ -22,7 +24,9 @@ class Game(object):
                 player = self.player1
                 opponent = self.player2
                 debug_stone = '●'
+            move_start = time.time()
             move, move_probs = player.get_action(self.board)
+            move_cost = time.time() - move_start
             #TODO  注意，在游戏进行时，Game类负责将当前棋局传递给当前棋手。
             # 棋手思考并得出结论，返回给Game；
             # Game负责将棋子落在棋盘上，然后应该是发一个全局的通知。 （发布：订阅模型）
@@ -40,7 +44,7 @@ class Game(object):
                 #print(move_probs)
                 # perform a move
                 self.board.do_move_by_number(move)
-                print ("player: ",debug_stone)
+                print ("player: ",debug_stone,"time: ",move_cost)
                 self.board._debug_board()
                 #if len(states) >= 5:
                 end, winner = self.board.game_end()

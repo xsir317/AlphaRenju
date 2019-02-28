@@ -8,7 +8,8 @@ network to guide the tree search and evaluate the leaf nodes
 
 import numpy as np
 import copy
-from renju import RenjuBoard
+#from renju import RenjuBoard
+from renjuv2 import RenjuBoard
 
 
 def softmax(x):
@@ -34,6 +35,7 @@ class TreeNode(object):
         self._P = prior_p
         self._lose = False
         self._win = False
+        self._board = None
 
     def expand(self, action_priors):
         """Expand tree by creating new children.
@@ -144,7 +146,7 @@ class MCTS(object):
                 if _sub_node._n_visits > 0:
                     print(RenjuBoard.number2pos(act),"\tsel ",_sub_node.get_value(self._c_puct),"\tv ",_sub_node._n_visits,"\tQ ",_sub_node._Q,"\tp ",_sub_node._P)
 
-    def _playout(self, state):
+    def _playout(self):
         """
         从根节点开始跑一个playout，找到暂时没有结论的叶子节点
         确认其胜负，不确定的就采纳神经网络的结论值；
@@ -155,7 +157,12 @@ class MCTS(object):
                 break
             # 爬树，如果爬树了，那么root至少不是秃的
             action, node = node.select(self._c_puct)
-            state.do_move_by_number(action)
+
+        if node._board is None:#那你肯定不是root，root进来的时候就拷了一份了。
+            node._board = copy.deepcopy(node._parent._board)
+            node._board.do_move_by_number(action)
+
+        state = node._board
 
         player = 1 - state.get_current_player() #应当是刚刚落子的那一方。
         leaf_value = None
@@ -220,11 +227,12 @@ class MCTS(object):
         temp: temperature parameter in (0, 1] controls the level of exploration
         """
         conclusion = False
+        if self._root._board is None:
+            self._root._board = copy.deepcopy(state)
         for n in range(self._n_playout):
             if n % 100 == 0:
                 self._debug()
-            state_copy = copy.deepcopy(state)
-            conclusion = self._playout(state_copy)
+            conclusion = self._playout()
             if conclusion:
                 print ("got conclusion on root")
                 break

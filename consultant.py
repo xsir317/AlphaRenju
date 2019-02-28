@@ -1,5 +1,6 @@
 #输入一个特定局面， 顾问会给出它认为的好点
-from renju import RenjuBoard
+#from renju import RenjuBoard
+from renjuv2 import RenjuBoard
 from players import MCTSPlayer
 #from policy_value_net import PolicyValueNet
 from policy_value_net_residual import PolicyValueNet
